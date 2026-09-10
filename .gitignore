@@ -1,0 +1,40 @@
+# --- 자격증명 / 시크릿 ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+secrets.json
+credentials.json
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+.netrc
+
+# --- 의존성 / 빌드 ---
+node_modules/
+dist/
+build/
+out/
+.next/
+.cache/
+coverage/
+
+# --- 원본 사진 아카이브 (대용량, 라이선스 원본) ---
+# 저장소에는 스팟 데이터(JSON)와 가공된 웹용 이미지만 커밋한다.
+/archive-raw/
+
+# --- OS / 편집기 ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# --- 에이전트 작업 산출물 ---
+.omc/
+!.omc/skills/
