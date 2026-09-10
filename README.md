@@ -19,7 +19,7 @@
 | MVP 범위 정의 | ✅ 초안 |
 | 플랫폼 선택 | ✅ **웹 PWA** — Vite + React 19 + TS + Tailwind 4, GitHub Pages, Leaflet ([§5·§6](PLATFORM_COMPARISON.md)) |
 | 사진 라이선스 게이트 | ✅ **조건부 통과** — [LICENSE_GATE.md](LICENSE_GATE.md) |
-| 구현 | 🔧 홈 + **정렬 프로토타입** 동작 (카메라·나침반·오버레이·슬라이더). 공유 화면은 자리표시. **실기기 미검증** |
+| 구현 | 🔧 홈 + 정렬 프로토타입 **2종** — A 카메라 오버레이 / **C 창 모드(카메라 없음)**. 실험 기록이 방식별로 분리 집계됨. 공유 화면은 자리표시. **실기기 미검증** |
 
 ---
 
@@ -29,6 +29,7 @@
 |---|---|
 | [PRD.md](PRD.md) | 무엇을 · 누구를 위해 · 왜. 성공 기준, 제약, 리스크 |
 | [MVP.md](MVP.md) | 실제로 만들 최소 범위. 완료의 정의. 보류 목록 |
+| [BENCHMARK_CITY_IN_TIME.md](BENCHMARK_CITY_IN_TIME.md) | 홍콩 실물 사인 분석 — 거리 마커 층, Phase 0 판정 기준 재작성 근거 |
 | [PLATFORM_COMPARISON.md](PLATFORM_COMPARISON.md) | 웹 PWA / Flutter / Unity AR / 웹AR 비교 및 권장안 |
 | [LICENSE_GATE.md](LICENSE_GATE.md) | 사진 라이선스 확보 가능성 조사 결과 · 소스별 판정 |
 | [SPOT_SCHEMA.md](SPOT_SCHEMA.md) | 스팟 데이터 스키마 v1 설명 — 콘텐츠 작업자용 |
@@ -54,6 +55,8 @@
 6. ~~정렬 프로토타입~~ 코드 완료. **폰에서 검증 필요** — 데스크톱·인앱 브라우저는 카메라를 막아 권한 거부 경로만 확인됨
 7. `public/spots/cheonggyecheon-gwanggyo/1964-covering-opening.jpg` 배치 (아직 없음 → 정렬 화면에 "사진 파일 없음" 표시)
 8. 공유 화면 — 합성 + Web Share
+9. **창 모드(C안) 실기기 검증** — 안내 화면에서 C·A 둘 다 열림. 현장 테스트는 두 방식을 번갈아
+   기록하고 홈의 "A 겹치기 / C 창" 집계를 비교한다 ([BENCHMARK_CITY_IN_TIME.md §7.3](BENCHMARK_CITY_IN_TIME.md))
 
 ---
 
@@ -122,7 +125,10 @@ src/lib/heading.ts      나침반 수학 (순수 함수, 테스트 있음)
 src/lib/sensors.ts      DeviceOrientation 권한·구독 (iOS/Android 분기)
 src/lib/camera.ts       getUserMedia 후면 카메라
 src/components/SpotMap  Leaflet 지도
-src/components/AlignScreen  정렬 화면: 카메라 위 옛 사진 오버레이 + 나침반 유도 + 슬라이더 4개
+src/components/AlignScreen  A안: 카메라 위 옛 사진 오버레이 + 나침반 유도 + 슬라이더 4개
+src/components/WindowScreen C안: 카메라 없음. 옛 사진을 방위에 고정, 나침반 없으면 드래그
+src/components/trial-ui     두 화면 공용: 방위 배지, 슬라이더, 판정 버튼, 기준선 질문
+src/components/usePose      센서 구독 + 스무딩 훅
 src/App.tsx             화면 4개 상태 전환 (공유만 자리표시)
 scripts/validate-spots  스키마 + 교차 규칙 검증
 ```
