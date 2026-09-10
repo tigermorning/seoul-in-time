@@ -18,7 +18,7 @@
 | PRD 작성 | ✅ 초안 |
 | MVP 범위 정의 | ✅ 초안 |
 | 플랫폼 선택 | ⬜ 미확정 (권장안 있음) |
-| 사진 라이선스 확보 가능성 확인 | ⬜ **착수 전 필수 게이트** |
+| 사진 라이선스 게이트 | ✅ **조건부 통과** — [LICENSE_GATE.md](LICENSE_GATE.md) |
 | 구현 | ⬜ 미착수 |
 
 ---
@@ -30,6 +30,7 @@
 | [PRD.md](PRD.md) | 무엇을 · 누구를 위해 · 왜. 성공 기준, 제약, 리스크 |
 | [MVP.md](MVP.md) | 실제로 만들 최소 범위. 완료의 정의. 보류 목록 |
 | [PLATFORM_COMPARISON.md](PLATFORM_COMPARISON.md) | 웹 PWA / Flutter / Unity AR / 웹AR 비교 및 권장안 |
+| [LICENSE_GATE.md](LICENSE_GATE.md) | 사진 라이선스 확보 가능성 조사 결과 · 소스별 판정 |
 
 ---
 
@@ -37,13 +38,14 @@
 
 우선순위 순:
 
-1. **사진 라이선스 게이트** — 공공 아카이브에서 광화문·명동·청계천의
-   공공누리 제1유형 사진을 실제로 확보할 수 있는지 확인.
-   *여기서 막히면 나머지 계획이 전부 무의미하다.*
-2. 플랫폼 확정 → [PLATFORM_COMPARISON.md §5](PLATFORM_COMPARISON.md)
-3. 스팟 데이터 스키마 확정 → [PLATFORM_COMPARISON.md §4](PLATFORM_COMPARISON.md)
-4. 스팟 1곳(광화문) 콘텐츠 제작 — 좌표·방위각 추정 후 현장 검증
-5. 정렬 프로토타입 구현
+1. ~~사진 라이선스 게이트~~ → **통과.** 잔여 확인 항목은
+   [LICENSE_GATE.md §5](LICENSE_GATE.md)
+2. **실물 확인** — 서울기록원 개별 사진의 공공누리 표시 여부, 다운로드
+   원본 해상도. *해상도가 썸네일급이면 스팟 선정 기준이 바뀐다.*
+3. 플랫폼 확정 → [PLATFORM_COMPARISON.md §5](PLATFORM_COMPARISON.md)
+4. 스팟 데이터 스키마 확정 → [PLATFORM_COMPARISON.md §4](PLATFORM_COMPARISON.md)
+5. 스팟 1곳(청계천 권장 — 자료 19건 확인됨) 콘텐츠 제작
+6. 정렬 프로토타입 구현
 
 ---
 
