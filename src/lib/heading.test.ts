@@ -6,8 +6,10 @@ import {
   magneticToTrue,
   normalizeBearing,
   overlayOffsetPx,
+  overlayPlacement,
   pitchRollFromReading,
   smoothBearing,
+  smoothLinear,
   trueHeadingFromReading,
 } from './heading'
 
@@ -21,6 +23,33 @@ describe('smoothBearing', () => {
   it('does not spin the long way around the wrap', () => {
     // 350 → 10 is a 20° clockwise turn, so one step at 0.5 lands on 0, not 180.
     expect(smoothBearing(350, 10, 0.5)).toBe(0)
+  })
+})
+
+describe('overlayPlacement', () => {
+  const base = { targetHeadingDeg: 0, targetPitchDeg: 0, cameraHfovDeg: 60, frameWidthPx: 600 }
+  it('is identity when the camera matches the photo', () => {
+    expect(overlayPlacement({ ...base, headingDeg: 0, pitchDeg: 0, rollDeg: 0 })).toEqual({ dx: 0, dy: 0, rotate: 0 })
+  })
+  it('moves the photo down when the camera tilts up past the photo pitch', () => {
+    // 10 px/deg; camera 5° above a photo taken level → 50 px down.
+    expect(overlayPlacement({ ...base, headingDeg: 0, pitchDeg: 5, rollDeg: 0 }).dy).toBe(50)
+    // Photo taken looking 5° down (pitch -5) with a level camera → photo sits 50 px down too.
+    expect(overlayPlacement({ ...base, targetPitchDeg: -5, headingDeg: 0, pitchDeg: 0, rollDeg: 0 }).dy).toBe(50)
+  })
+  it('counter-rotates the phone roll', () => {
+    expect(overlayPlacement({ ...base, headingDeg: 0, pitchDeg: 0, rollDeg: 7 }).rotate).toBe(-7)
+  })
+  it('leaves dy and rotate at 0 when pitch/roll are unknown', () => {
+    const p = overlayPlacement({ ...base, headingDeg: 10, pitchDeg: null, rollDeg: null })
+    expect(p).toEqual({ dx: -100, dy: 0, rotate: 0 })
+  })
+})
+
+describe('smoothLinear', () => {
+  it('starts at the first sample and moves a fraction toward the next', () => {
+    expect(smoothLinear(null, 8)).toBe(8)
+    expect(smoothLinear(0, 8, 0.25)).toBe(2)
   })
 })
 

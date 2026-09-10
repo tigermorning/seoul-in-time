@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Spot } from '../types/spot'
-import { bearingDelta, normalizeBearing, overlayOffsetPx, smoothBearing } from '../lib/heading'
+import { bearingDelta, normalizeBearing, overlayPlacement, smoothBearing, smoothLinear } from '../lib/heading'
 import { initialSensorStatus, requestOrientationPermission, subscribeCameraPose, type SensorStatus } from '../lib/sensors'
 import { startRearCamera, stopStream, type CameraError } from '../lib/camera'
 import { spotImageUrl } from '../lib/spots'
@@ -42,6 +42,8 @@ export function AlignScreen({
   const [cameraError, setCameraError] = useState<CameraError | null>(null)
   const [sensor, setSensor] = useState<SensorStatus>(() => initialSensorStatus())
   const [heading, setHeading] = useState<number | null>(null) // smoothed true heading
+  const [pitch, setPitch] = useState<number | null>(null) // smoothed, deg above horizon
+  const [roll, setRoll] = useState<number | null>(null) // smoothed, deg
   const [gotAnyReading, setGotAnyReading] = useState(false)
 
   // User-adjustable knobs. They are not written back to the spot file, but
@@ -155,14 +157,24 @@ export function AlignScreen({
 
   useEffect(() => {
     if (phase !== 'live' || sensor !== 'granted') return
-    let smoothed: number | null = null
+    let sHeading: number | null = null
+    let sPitch: number | null = null
+    let sRoll: number | null = null
     const unsub = subscribeCameraPose((pose) => {
+      // Pitch/roll arrive even when the heading is untrustworthy (iOS relative
+      // alpha, or camera pointing at the sky), so update them independently.
+      if (pose.pitch !== null) {
+        sPitch = smoothLinear(sPitch, pose.pitch)
+        setPitch(sPitch)
+      }
+      if (pose.roll !== null) {
+        sRoll = smoothLinear(sRoll, pose.roll)
+        setRoll(sRoll)
+      }
       if (pose.heading === null) return
       setGotAnyReading(true)
-      smoothed = smoothBearing(smoothed, pose.heading)
-      setHeading(smoothed)
-      // pose.pitch / pose.roll are wired into the overlay in the next step
-      // (review finding #2); the heading fix (#3) only needs the horizontal.
+      sHeading = smoothBearing(sHeading, pose.heading)
+      setHeading(sHeading)
     })
     return unsub
   }, [phase, sensor])
@@ -182,7 +194,19 @@ export function AlignScreen({
   useEffect(() => stopCamera, [stopCamera])
 
   const frameW = frameRef.current?.clientWidth ?? 0
-  const offsetPx = effectiveHeading === null ? 0 : overlayOffsetPx(effectiveHeading, target, cameraHfov, frameW)
+  // Without a heading the photo stays centred horizontally but still follows
+  // pitch and roll, which is what the manual-trim fallback needs.
+  const placement = overlayPlacement({
+    headingDeg: effectiveHeading ?? target,
+    pitchDeg: pitch,
+    rollDeg: roll,
+    targetHeadingDeg: target,
+    targetPitchDeg: spot.viewpoint.pitch_deg ?? 0,
+    cameraHfovDeg: cameraHfov,
+    frameWidthPx: frameW,
+  })
+  // eye_height_m is deliberately unused: without a distance to the scene it
+  // cannot be turned into a pixel shift. It stays in the data for surveys.
   const overlayScale = spot.viewpoint.hfov_deg / cameraHfov
   const aligned = delta !== null && Math.abs(delta) <= ALIGNED_TOLERANCE_DEG
 
@@ -198,9 +222,9 @@ export function AlignScreen({
             onError={() => setImageMissing(true)}
             className="pointer-events-none absolute top-1/2 left-1/2 max-w-none"
             style={{
-              // Centre, then shift by the compass error, then scale the photo
-              // so its field of view matches the camera's.
-              transform: `translate(calc(-50% + ${offsetPx}px), -50%) scale(${overlayScale})`,
+              // Centre, shift by heading/pitch error, counter-rotate the roll,
+              // then scale the photo so its field of view matches the camera's.
+              transform: `translate(calc(-50% + ${placement.dx}px), calc(-50% + ${placement.dy}px)) rotate(${placement.rotate}deg) scale(${overlayScale})`,
               width: '100%',
               opacity,
               clipPath: `inset(0 ${100 - reveal}% 0 0)`,

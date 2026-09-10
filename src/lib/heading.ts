@@ -144,6 +144,48 @@ export function overlayOffsetPx(
   return bearingDelta(currentDeg, targetDeg) * pxPerDeg
 }
 
+/** Plain exponential smoothing for quantities that do not wrap (pitch, roll). */
+export function smoothLinear(prev: number | null, next: number, alpha = 0.25): number {
+  return prev === null ? next : prev + alpha * (next - prev)
+}
+
+export interface OverlayPlacement {
+  /** Horizontal shift in px, positive = right. */
+  dx: number
+  /** Vertical shift in px, positive = down. */
+  dy: number
+  /** Rotation in degrees, CSS sense (positive = clockwise). */
+  rotate: number
+}
+
+/** Where to draw the historical photo so it stays glued to the scene while
+ *  the phone moves. Pixel-per-degree comes from the camera's horizontal FOV
+ *  across the frame width; pixels are assumed square so the same scale
+ *  applies vertically.
+ *
+ *  - Target is to the right of where the camera points → shift right.
+ *  - Camera pitched up more than the photo's pitch → scene (and photo) move
+ *    down the screen.
+ *  - Phone rolled clockwise → scene appears rotated counter-clockwise, so the
+ *    photo rotates by -roll. */
+export function overlayPlacement(args: {
+  headingDeg: number
+  pitchDeg: number | null
+  rollDeg: number | null
+  targetHeadingDeg: number
+  targetPitchDeg: number
+  cameraHfovDeg: number
+  frameWidthPx: number
+}): OverlayPlacement {
+  const pxPerDeg = args.frameWidthPx / args.cameraHfovDeg
+  const dx = bearingDelta(args.headingDeg, args.targetHeadingDeg) * pxPerDeg
+  const dy = args.pitchDeg === null ? 0 : (args.pitchDeg - args.targetPitchDeg) * pxPerDeg
+  // `0 - x` rather than `-x` so a zero roll yields +0, not -0 (CSS is fine
+  // with either; test equality is not).
+  const rotate = args.rollDeg === null ? 0 : 0 - args.rollDeg
+  return { dx, dy, rotate }
+}
+
 /** Full pipeline: sensor reading → true-north bearing, or null. */
 export function trueHeadingFromReading(
   r: OrientationReading,
