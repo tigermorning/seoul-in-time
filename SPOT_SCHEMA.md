@@ -75,6 +75,14 @@ archive-raw/                       ← 아카이브 원본. gitignore. 커밋 �
 
 ### `historical[]` — 옛 사진들
 
+#### 파노라마 · 다중 방향 (B안용, 선택)
+
+| 필드 | 뜻 |
+|---|---|
+| `image.projection` | `flat`(기본) 보통 사진. `equirect` 360×180 파노라마(가로:세로 2:1). equirect는 **가운데 열이 `view.heading_deg`(없으면 `viewpoint.heading_deg`)를 향한다** — 저작 단계에서 이미지를 가로로 돌려 맞춘다 |
+| `view.heading_deg` / `pitch_deg` / `hfov_deg` | 이 사진이 세상에서 향하는 방향. 없으면 `viewpoint` 값. 같은 지점에서 다른 방향을 찍은 사진 여러 장을 각자 방위에 걸면 **부분 파노라마**가 된다 |
+
+
 **오래된 것부터.** 첫 항목이 기본 정렬 대상, 나머지는 시대 선택기에 뜸.
 청계천처럼 시대 3개면 항목 3개.
 

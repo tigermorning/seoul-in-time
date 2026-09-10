@@ -40,7 +40,7 @@ export function SpotMap({
         .on('click', () => onSelect(spot)),
     )
     if (markers.length > 0) {
-      map.fitBounds(L.featureGroup(markers).getBounds().pad(0.3), { maxZoom: 15 })
+      map.fitBounds(L.featureGroup(markers).getBounds().pad(0.3), { maxZoom: 15, animate: false })
     }
 
     return () => {

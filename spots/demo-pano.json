@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "demo-pano",
+  "status": "draft",
+  "name": { "ko": "[데모] 360° 파노라마 뷰어 테스트", "en": "[demo] panorama viewer test pattern" },
+
+  "viewpoint": {
+    "lat": 37.5665,
+    "lng": 126.9780,
+    "heading_deg": 0,
+    "pitch_deg": 0,
+    "hfov_deg": 60,
+    "confidence": "rough",
+    "surveyed_at": null,
+    "notes": "임시 콘텐츠. 실제 옛 사진이 아니라 방위·피치 격자 테스트 패턴. 파노라마 뷰어(B안)의 방향 매핑을 폰에서 검증하기 위한 것. 좌표는 서울시청 앞 임의값. 실제 파노라마 원본이 확보되면 교체."
+  },
+
+  "guide": {
+    "instruction": { "ko": "아무 데나 서서 폰을 세우고 천천히 한 바퀴 돌아보세요. 화면의 N·E·S·W가 실제 방위와 맞는지, 폰을 들면 +15° 선이 올라오는지 봅니다." },
+    "stand_here_image": null,
+    "landmarks": []
+  },
+
+  "present": null,
+
+  "historical": [
+    {
+      "id": "grid",
+      "title": { "ko": "방위 격자 테스트 패턴", "en": "bearing grid test pattern" },
+      "year": null,
+      "year_precision": "unknown",
+      "date": null,
+      "media_type": "drawing",
+      "description": { "ko": "가운데 열이 진북(0°). 노란 선 = N/E/S/W, 회색 가로선 = 15° 피치 간격. 옛 사진 아님." },
+      "image": {
+        "file": "grid.jpg",
+        "projection": "equirect",
+        "original_px": { "w": 4096, "h": 2048 },
+        "crop": null
+      },
+      "source": {
+        "org": "기타",
+        "archive_id": "generated-2026-09-10",
+        "url": "https://github.com/tigermorning/seoul-in-time",
+        "producer": "프로젝트 자체 생성 (PIL 스크립트)"
+      },
+      "license": {
+        "type": "PUBLIC-DOMAIN",
+        "evidence": "statement",
+        "evidence_url": "https://github.com/tigermorning/seoul-in-time",
+        "evidence_quote": "프로젝트가 직접 생성한 테스트 패턴. 저작물성 없음.",
+        "attribution": "서울 인 타임 프로젝트 테스트 패턴 (옛 사진 아님)",
+        "checked_at": "2026-09-10"
+      },
+      "alignment": { "hints": [] }
+    }
+  ]
+}

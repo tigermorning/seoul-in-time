@@ -350,6 +350,7 @@ C안이 문서에 없다. A의 콘텐츠 원가에 B의 권한·화각 면역을
 - [ ] **PRD §8.3 — "28개 스팟" → 실측 46개 / 8지구 / 1860~1987로 정정**
 - [ ] **PRD 비목표 5 — "위촉 일러스트"가 금지 대상인지 명시** (그들은 26/46이 위촉 일러스트)
 - [ ] **PLATFORM_COMPARISON — 정렬 방식 3안(§7.3) 비교 절 추가. C안이 문서에 없음**
+- [x] **코드 — B안 프로토타입 `PanoScreen` + `panoScene.ts` (three.js).** 스키마에 `image.projection`(flat|equirect), `historical[].view`(사진별 방위·피치·화각) 추가. 데모 스팟 `demo-pano` = 방위 격자 테스트 패턴
 - [x] **코드 — C안 프로토타입 `WindowScreen`.** 안내 화면에서 A/C 선택, 트라이얼에 `mode` 기록, 홈에서 방식별 집계
 - [ ] **MVP §5.4 / TEST_PROTOCOL — Phase 0에 C안(카메라 없는 단일 사진)을 같이 태워 측정**
 - [ ] Phase 1 출하 단위를 스팟 개수 → **지구**로 재편 (30곳 = 6지구 × 5)

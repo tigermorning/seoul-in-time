@@ -11,9 +11,10 @@ export type TrialResult = 'success' | 'fail' | 'abandon'
 
 /** Which alignment method the trial used (BENCHMARK_CITY_IN_TIME.md §7.3).
  *  'overlay' = live camera with the photo on top (안 A).
+ *  'pano'    = no camera; photos on a sphere you look around in (안 B).
  *  'window'  = no camera; only the photo, glued to the compass (안 C).
  *  Missing on trials recorded before this field existed → overlay. */
-export type TrialMode = 'overlay' | 'window'
+export type TrialMode = 'overlay' | 'pano' | 'window'
 
 /** What the participant says lined up. Tells us which anchors work. */
 export type Anchor = 'ridge' | 'road' | 'building' | 'water' | 'other' | 'unsure'
@@ -102,6 +103,7 @@ export function modeOf(t: Trial): TrialMode {
 export function summarizeByMode(trials: Trial[]): Record<TrialMode, TrialSummary> {
   return {
     overlay: summarize(trials.filter((t) => modeOf(t) === 'overlay')),
+    pano: summarize(trials.filter((t) => modeOf(t) === 'pano')),
     window: summarize(trials.filter((t) => modeOf(t) === 'window')),
   }
 }

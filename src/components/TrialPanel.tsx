@@ -65,7 +65,7 @@ export function TrialPanel() {
       </div>
       {s.n > 0 && (
         <p className="mt-1 text-neutral-500">
-          A 겹치기 <ModeStat s={byMode.overlay} /> · C 창 <ModeStat s={byMode.window} />
+          A 겹치기 <ModeStat s={byMode.overlay} /> · B 파노라마 <ModeStat s={byMode.pano} /> · C 창 <ModeStat s={byMode.window} />
         </p>
       )}
       {status && <p className="mt-1">{status}</p>}

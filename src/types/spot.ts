@@ -47,8 +47,12 @@ export interface NormalizedRect {
   h: number
 }
 
+export type Projection = 'flat' | 'equirect'
+
 export interface HistoricalImage {
   file: string
+  /** Defaults to 'flat'. */
+  projection?: Projection
   original_ref?: string
   original_px?: { w: number; h: number }
   crop?: NormalizedRect | null
@@ -84,6 +88,8 @@ export interface HistoricalPhoto {
   date?: string | null
   media_type: MediaType
   description?: LocalizedText
+  /** Per-photo bearing/pitch/fov; missing fields fall back to viewpoint. */
+  view?: { heading_deg?: number; pitch_deg?: number; hfov_deg?: number }
   image: HistoricalImage
   source: Source
   license: License

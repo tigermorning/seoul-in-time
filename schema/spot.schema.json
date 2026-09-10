@@ -126,6 +126,16 @@
           "description": "Hand-tinted postcards are common in the 1910s-30s material; the UI labels them so users do not mistake tinting for colour photography."
         },
         "description": { "type": "object", "properties": { "ko": { "type": "string" }, "en": { "type": "string" } }, "description": "The archive's own caption, verbatim. Often the best clue for camera position." },
+        "view": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Where this photo sits in the world, when it differs from the spot's viewpoint. Lets several photos from the same standpoint face different directions (a partial panorama). Missing fields fall back to viewpoint.",
+          "properties": {
+            "heading_deg": { "type": "number", "minimum": 0, "exclusiveMaximum": 360 },
+            "pitch_deg": { "type": "number", "minimum": -90, "maximum": 90 },
+            "hfov_deg": { "type": "number", "exclusiveMinimum": 0, "maximum": 180 }
+          }
+        },
 
         "image": {
           "type": "object",
@@ -133,6 +143,12 @@
           "additionalProperties": false,
           "properties": {
             "file": { "type": "string", "description": "Base filename under /spots/<id>/. The image pipeline derives sizes from it; do not put a size suffix here." },
+            "projection": {
+              "type": "string",
+              "enum": ["flat", "equirect"],
+              "default": "flat",
+              "description": "flat = an ordinary photograph placed at view.heading_deg with view.hfov_deg. equirect = a full 360x180 panorama (2:1); its centre column faces view.heading_deg and hfov is implied."
+            },
             "original_ref": { "type": "string", "description": "Where the master came from (archive URL or download endpoint). Master itself lives in /archive-raw/ and is not committed." },
             "original_px": {
               "type": "object", "required": ["w", "h"],

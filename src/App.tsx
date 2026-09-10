@@ -4,6 +4,7 @@ import type { Spot } from './types/spot'
 import { SpotMap } from './components/SpotMap'
 import { AlignScreen } from './components/AlignScreen'
 import { WindowScreen } from './components/WindowScreen'
+import { PanoScreen } from './components/PanoScreen'
 import { TrialPanel } from './components/TrialPanel'
 
 // The four MVP screens (PLATFORM_COMPARISON.md §6), plus 'window': the same
@@ -13,6 +14,7 @@ type Screen =
   | { name: 'home' }
   | { name: 'guide'; spot: Spot }
   | { name: 'align'; spot: Spot }
+  | { name: 'pano'; spot: Spot }
   | { name: 'window'; spot: Spot }
   | { name: 'share'; spot: Spot }
 
@@ -28,10 +30,12 @@ export default function App() {
           spot={screen.spot}
           onBack={() => setScreen({ name: 'home' })}
           onAlign={() => setScreen({ name: 'align', spot: screen.spot })}
+          onPano={() => setScreen({ name: 'pano', spot: screen.spot })}
           onWindow={() => setScreen({ name: 'window', spot: screen.spot })}
         />
       )
     case 'align':
+    case 'pano':
     case 'window': {
       // A successful trial continues to sharing; a failed one goes home so
       // the next participant starts clean.
@@ -41,7 +45,9 @@ export default function App() {
         onDone: (trial: { result: string }) =>
           setScreen(trial.result === 'success' ? { name: 'share', spot: screen.spot } : { name: 'home' }),
       }
-      return screen.name === 'align' ? <AlignScreen {...props} /> : <WindowScreen {...props} />
+      if (screen.name === 'align') return <AlignScreen {...props} />
+      if (screen.name === 'pano') return <PanoScreen {...props} />
+      return <WindowScreen {...props} />
     }
     case 'share':
       return (
@@ -98,11 +104,13 @@ function Guide({
   spot,
   onBack,
   onAlign,
+  onPano,
   onWindow,
 }: {
   spot: Spot
   onBack: () => void
   onAlign: () => void
+  onPano: () => void
   onWindow: () => void
 }) {
   return (
@@ -124,11 +132,19 @@ function Guide({
         </p>
         <button
           type="button"
-          onClick={onWindow}
+          onClick={onPano}
           className="w-full rounded-lg bg-amber-400 px-4 py-3 text-left text-black"
         >
+          <span className="block font-semibold">B · 파노라마</span>
+          <span className="block text-xs">카메라 안 켬. 폰을 돌리면 그 방향의 옛 모습. City in Time 방식</span>
+        </button>
+        <button
+          type="button"
+          onClick={onWindow}
+          className="w-full rounded-lg bg-neutral-800 px-4 py-3 text-left"
+        >
           <span className="block font-semibold">C · 창 모드</span>
-          <span className="block text-xs">카메라 안 켬. 화면엔 옛 사진만. 폰에서 눈을 떼고 실제 풍경과 비교</span>
+          <span className="block text-xs text-neutral-400">카메라 안 켬. 화면엔 옛 사진 1장만, 방위에 고정</span>
         </button>
         <button
           type="button"
