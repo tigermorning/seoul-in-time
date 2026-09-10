@@ -17,11 +17,13 @@ GoogleService-Info.plist
 # --- 의존성 / 빌드 ---
 node_modules/
 dist/
+dev-dist/
 build/
 out/
 .next/
 .cache/
 coverage/
+*.tsbuildinfo
 
 # --- 원본 사진 아카이브 (대용량, 라이선스 원본) ---
 # 저장소에는 스팟 데이터(JSON)와 가공된 웹용 이미지만 커밋한다.
