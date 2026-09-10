@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Spot } from '../types/spot'
-import { bearingDelta, magneticToTrue, normalizeBearing, overlayPlacement, smoothBearing, smoothLinear } from '../lib/heading'
+import { bearingDelta, magneticToTrue, normalizeBearing, overlayPlacement } from '../lib/heading'
 import {
   initialSensorStatus,
   requestOrientationPermission,
-  subscribeCameraPose,
   type CameraPose,
   type HeadingSource,
   type SensorStatus,
@@ -12,6 +11,8 @@ import {
 import { startRearCamera, stopStream, type CameraError } from '../lib/camera'
 import { spotImageUrl } from '../lib/spots'
 import { newTrialId, saveTrial, type Anchor, type Trial, type TrialResult } from '../lib/trials'
+import { AnchorSheet, HeadingReadout, Slider, VerdictButtons, fmt, settleResult } from './trial-ui'
+import { usePose } from './usePose'
 
 // Phones do not expose their camera FOV. 65° is a typical rear-camera value
 // in portrait; the user can correct it with the scale slider.
@@ -20,15 +21,6 @@ const DEFAULT_CAMERA_HFOV = 65
 const ALIGNED_TOLERANCE_DEG = 4
 
 type Phase = 'idle' | 'starting' | 'live' | 'verdict'
-
-const ANCHOR_OPTIONS: { key: Anchor; label: string }[] = [
-  { key: 'ridge', label: '산 능선' },
-  { key: 'road', label: '도로·길' },
-  { key: 'building', label: '건물 윤곽' },
-  { key: 'water', label: '물길·다리' },
-  { key: 'other', label: '기타' },
-  { key: 'unsure', label: '모르겠음' },
-]
 
 export function AlignScreen({
   spot,
@@ -48,12 +40,8 @@ export function AlignScreen({
   const [phase, setPhase] = useState<Phase>('idle')
   const [cameraError, setCameraError] = useState<CameraError | null>(null)
   const [sensor, setSensor] = useState<SensorStatus>(() => initialSensorStatus())
-  const [heading, setHeading] = useState<number | null>(null) // smoothed MAGNETIC heading
-  const [pitch, setPitch] = useState<number | null>(null) // smoothed, deg above horizon
-  const [roll, setRoll] = useState<number | null>(null) // smoothed, deg
-  const [gotAnyReading, setGotAnyReading] = useState(false)
-  const [source, setSource] = useState<HeadingSource>('none')
-  const [lastPose, setLastPose] = useState<CameraPose | null>(null)
+  const pose = usePose(phase === 'live' && sensor === 'granted')
+  const { heading, pitch, roll, gotAnyReading, source, last: lastPose } = pose
 
   // Field-test instrumentation (review #1). Whether iOS's compass value is
   // already true north is unknown; the tester flips this on site and reads
@@ -72,7 +60,6 @@ export function AlignScreen({
   // Trial timing. Starts on the "카메라 켜기" tap, ends on the verdict tap.
   const trialStart = useRef<{ id: string; at: number; iso: string } | null>(null)
   const [pendingResult, setPendingResult] = useState<TrialResult | null>(null)
-  const [anchors, setAnchors] = useState<Anchor[]>([])
   const savedRef = useRef(false)
 
   const target = spot.viewpoint.heading_deg
@@ -91,6 +78,7 @@ export function AlignScreen({
         started_at: s.iso,
         ms: Date.now() - s.at,
         result,
+        mode: 'overlay',
         anchors: chosen,
         trim_deg: trimDeg,
         camera_hfov: cameraHfov,
@@ -135,24 +123,23 @@ export function AlignScreen({
     (result: TrialResult) => {
       stopCamera()
       setPendingResult(result)
-      setAnchors([])
       setPhase('verdict')
     },
     [stopCamera],
   )
 
   /** Anchor question answered. Persist and hand off. */
-  const finish = useCallback(() => {
-    if (!pendingResult || savedRef.current) return
-    // A "success" backed only by "모르겠음" is not a success (TEST_PROTOCOL §2).
-    const onlyUnsure = anchors.length > 0 && anchors.every((a) => a === 'unsure')
-    const result: TrialResult = pendingResult === 'success' && (anchors.length === 0 || onlyUnsure) ? 'fail' : pendingResult
-    const t = buildTrial(result, anchors)
-    if (!t) return
-    savedRef.current = true
-    saveTrial(t)
-    onDone(t)
-  }, [pendingResult, anchors, buildTrial, onDone])
+  const finish = useCallback(
+    (anchors: Anchor[]) => {
+      if (!pendingResult || savedRef.current) return
+      const t = buildTrial(settleResult(pendingResult, anchors), anchors)
+      if (!t) return
+      savedRef.current = true
+      saveTrial(t)
+      onDone(t)
+    },
+    [pendingResult, buildTrial, onDone],
+  )
 
   /** Leaving mid-trial (back button, tab hidden) is recorded as abandon. */
   const abandon = useCallback(() => {
@@ -170,32 +157,6 @@ export function AlignScreen({
     abandon()
     onBack()
   }, [abandon, onBack])
-
-  useEffect(() => {
-    if (phase !== 'live' || sensor !== 'granted') return
-    let sHeading: number | null = null
-    let sPitch: number | null = null
-    let sRoll: number | null = null
-    const unsub = subscribeCameraPose((pose) => {
-      // Pitch/roll arrive even when the heading is untrustworthy (iOS relative
-      // alpha, or camera pointing at the sky), so update them independently.
-      if (pose.pitch !== null) {
-        sPitch = smoothLinear(sPitch, pose.pitch)
-        setPitch(sPitch)
-      }
-      if (pose.roll !== null) {
-        sRoll = smoothLinear(sRoll, pose.roll)
-        setRoll(sRoll)
-      }
-      setLastPose(pose)
-      if (pose.magneticHeading === null) return
-      setGotAnyReading(true)
-      setSource(pose.source)
-      sHeading = smoothBearing(sHeading, pose.magneticHeading)
-      setHeading(sHeading)
-    })
-    return unsub
-  }, [phase, sensor])
 
   useEffect(() => {
     const onVisibility = () => {
@@ -327,65 +288,14 @@ export function AlignScreen({
             <Slider label={`투명도 ${Math.round(opacity * 100)}%`} min={0.1} max={1} step={0.05} value={opacity} onChange={setOpacity} />
             <Slider label={`방위 보정 ${trimDeg > 0 ? '+' : ''}${trimDeg}°`} min={-45} max={45} step={1} value={trimDeg} onChange={setTrimDeg} />
             <Slider label={`카메라 화각 ${cameraHfov}°`} min={40} max={100} step={1} value={cameraHfov} onChange={setCameraHfov} />
-            <div className="mt-1 flex gap-2">
-              <button
-                type="button"
-                onClick={() => verdict('fail')}
-                className="flex-1 rounded-lg bg-neutral-700 py-3 text-base font-semibold"
-              >
-                못 맞췄다
-              </button>
-              <button
-                type="button"
-                onClick={() => verdict('success')}
-                className="flex-1 rounded-lg bg-amber-400 py-3 text-base font-semibold text-black"
-              >
-                맞았다
-              </button>
-            </div>
+            <VerdictButtons onVerdict={verdict} />
           </div>
         </>
       )}
 
-      {phase === 'verdict' && (
-        <div className="absolute inset-0 flex flex-col justify-center gap-4 bg-black/90 p-6">
-          <h2 className="text-lg font-semibold">
-            {pendingResult === 'success' ? '무엇이 겹쳐 보였나요?' : '무엇을 맞추려고 했나요?'}
-          </h2>
-          <p className="text-sm text-neutral-400">해당하는 것 모두 선택</p>
-          <div className="flex flex-wrap gap-2">
-            {ANCHOR_OPTIONS.map((o) => {
-              const on = anchors.includes(o.key)
-              return (
-                <button
-                  key={o.key}
-                  type="button"
-                  onClick={() =>
-                    setAnchors((prev) => (on ? prev.filter((a) => a !== o.key) : [...prev, o.key]))
-                  }
-                  className={`rounded-full px-4 py-2 text-sm ${on ? 'bg-amber-400 text-black' : 'bg-neutral-800'}`}
-                >
-                  {o.label}
-                </button>
-              )
-            })}
-          </div>
-          <button
-            type="button"
-            onClick={finish}
-            disabled={anchors.length === 0}
-            className="mt-4 rounded-lg bg-amber-400 py-3 font-semibold text-black disabled:opacity-40"
-          >
-            기록하고 계속
-          </button>
-        </div>
-      )}
+      {phase === 'verdict' && pendingResult && <AnchorSheet result={pendingResult} onFinish={finish} />}
     </main>
   )
-}
-
-function fmt(n: number | null | undefined, digits = 1): string {
-  return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(digits) : '—'
 }
 
 /** Raw sensor values and every derived number, so a field test can see
@@ -441,65 +351,6 @@ function DebugPanel({
       </button>
       <div className="text-neutral-500">북쪽 보고 진북이 0°인 쪽이 정답</div>
     </div>
-  )
-}
-
-function HeadingReadout({
-  heading,
-  delta,
-  aligned,
-  sensor,
-  gotAnyReading,
-}: {
-  heading: number | null
-  delta: number | null
-  aligned: boolean
-  sensor: SensorStatus
-  gotAnyReading: boolean
-}) {
-  let text: string
-  if (sensor === 'denied') text = '나침반 권한 거부됨 — 방위 보정 슬라이더로 수동 조정'
-  else if (sensor === 'unsupported') text = '나침반 없음 — 수동 조정'
-  else if (!gotAnyReading) text = '나침반 대기 중… 폰을 8자로 흔들어 보세요'
-  else if (heading === null || delta === null) text = '나침반 값 없음'
-  else if (aligned) text = `정렬됨 · ${Math.round(heading)}°`
-  else text = `${delta > 0 ? '→ 오른쪽으로' : '← 왼쪽으로'} ${Math.abs(Math.round(delta))}°`
-
-  return (
-    <span className={`rounded-full px-4 py-1 text-sm ${aligned ? 'bg-amber-400 text-black' : 'bg-black/60'}`}>
-      {text}
-    </span>
-  )
-}
-
-function Slider({
-  label,
-  min,
-  max,
-  step,
-  value,
-  onChange,
-}: {
-  label: string
-  min: number
-  max: number
-  step: number
-  value: number
-  onChange: (v: number) => void
-}) {
-  return (
-    <label className="flex items-center gap-3">
-      <span className="w-28 shrink-0 text-neutral-300">{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-amber-400"
-      />
-    </label>
   )
 }
 

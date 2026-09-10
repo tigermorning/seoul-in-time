@@ -9,6 +9,12 @@ import type { SensorStatus } from './sensors'
 
 export type TrialResult = 'success' | 'fail' | 'abandon'
 
+/** Which alignment method the trial used (BENCHMARK_CITY_IN_TIME.md §7.3).
+ *  'overlay' = live camera with the photo on top (안 A).
+ *  'window'  = no camera; only the photo, glued to the compass (안 C).
+ *  Missing on trials recorded before this field existed → overlay. */
+export type TrialMode = 'overlay' | 'window'
+
 /** What the participant says lined up. Tells us which anchors work. */
 export type Anchor = 'ridge' | 'road' | 'building' | 'water' | 'other' | 'unsure'
 
@@ -19,6 +25,7 @@ export interface Trial {
   started_at: string // ISO
   ms: number // start → verdict
   result: TrialResult
+  mode?: TrialMode
   anchors: Anchor[]
   trim_deg: number
   camera_hfov: number
@@ -84,6 +91,18 @@ export function summarize(trials: Trial[]): TrialSummary {
     successes: ok.length,
     successRate: n === 0 ? null : ok.length / n,
     medianSuccessMs: median(ok.map((t) => t.ms)),
+  }
+}
+
+export function modeOf(t: Trial): TrialMode {
+  return t.mode ?? 'overlay'
+}
+
+/** Summary per alignment method, so the two can be compared side by side. */
+export function summarizeByMode(trials: Trial[]): Record<TrialMode, TrialSummary> {
+  return {
+    overlay: summarize(trials.filter((t) => modeOf(t) === 'overlay')),
+    window: summarize(trials.filter((t) => modeOf(t) === 'window')),
   }
 }
 

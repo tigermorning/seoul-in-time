@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5173,
       "url": "https://localhost:5173"
+    },
+    {
+      "name": "dev-http-5174",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5174", "--strictPort"],
+      "port": 5174,
+      "url": "http://localhost:5174"
     }
   ]
 }

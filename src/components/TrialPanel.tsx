@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { clearTrials, exportJson, loadTrials, summarize, type Trial } from '../lib/trials'
+import { clearTrials, exportJson, loadTrials, summarize, summarizeByMode, type Trial, type TrialSummary } from '../lib/trials'
 
 /** Field-test bookkeeping on the home screen: the running Phase 0 numbers
  *  and a way to get the JSON off the phone. See TEST_PROTOCOL.md §4. */
@@ -8,6 +8,7 @@ export function TrialPanel() {
   const [status, setStatus] = useState<string | null>(null)
   const [rawJson, setRawJson] = useState<string | null>(null)
   const s = summarize(trials)
+  const byMode = summarizeByMode(trials)
 
   async function exportAll() {
     const json = exportJson(trials)
@@ -62,6 +63,11 @@ export function TrialPanel() {
           </button>
         </span>
       </div>
+      {s.n > 0 && (
+        <p className="mt-1 text-neutral-500">
+          A 겹치기 <ModeStat s={byMode.overlay} /> · C 창 <ModeStat s={byMode.window} />
+        </p>
+      )}
       {status && <p className="mt-1">{status}</p>}
       {rawJson && (
         <textarea
@@ -72,5 +78,16 @@ export function TrialPanel() {
         />
       )}
     </section>
+  )
+}
+
+function ModeStat({ s }: { s: TrialSummary }) {
+  if (s.n === 0) return <span>0건</span>
+  const rate = s.successRate === null ? '—' : `${Math.round(s.successRate * 100)}%`
+  const med = s.medianSuccessMs === null ? '—' : `${Math.round(s.medianSuccessMs / 1000)}초`
+  return (
+    <span>
+      {s.n}건 <b className="text-neutral-300">{rate}</b>/{med}
+    </span>
   )
 }

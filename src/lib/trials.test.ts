@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { median, summarize, type Trial } from './trials'
+import { median, summarize, summarizeByMode, type Trial } from './trials'
 
-function trial(result: Trial['result'], ms: number): Trial {
+function trial(result: Trial['result'], ms: number, mode?: Trial['mode']): Trial {
   return {
     id: 't',
     spot_id: 's',
@@ -9,6 +9,7 @@ function trial(result: Trial['result'], ms: number): Trial {
     started_at: '2026-09-10T00:00:00Z',
     ms,
     result,
+    mode,
     anchors: [],
     trim_deg: 0,
     camera_hfov: 65,
@@ -45,5 +46,21 @@ describe('summarize', () => {
     expect(s.successes).toBe(3)
     expect(s.successRate).toBeCloseTo(0.6)
     expect(s.medianSuccessMs).toBe(20_000)
+  })
+})
+
+describe('summarizeByMode', () => {
+  it('treats trials without a mode as overlay and splits the rest', () => {
+    const by = summarizeByMode([
+      trial('success', 10_000), // legacy record, no mode
+      trial('fail', 20_000, 'overlay'),
+      trial('success', 5_000, 'window'),
+      trial('success', 15_000, 'window'),
+    ])
+    expect(by.overlay.n).toBe(2)
+    expect(by.overlay.successRate).toBeCloseTo(0.5)
+    expect(by.window.n).toBe(2)
+    expect(by.window.successRate).toBe(1)
+    expect(by.window.medianSuccessMs).toBe(10_000)
   })
 })
