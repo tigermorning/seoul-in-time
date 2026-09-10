@@ -1,6 +1,6 @@
 // Browser sensor plumbing for the compass. Everything that touches window /
 // DeviceOrientationEvent lives here; the math lives in heading.ts.
-import { pitchRollFromReading, trueHeadingFromReading, type OrientationReading } from './heading'
+import { magneticHeadingFromReading, pitchRollFromReading, type OrientationReading } from './heading'
 
 export type SensorStatus =
   | 'unsupported' // no DeviceOrientationEvent at all
@@ -38,13 +38,29 @@ export async function requestOrientationPermission(): Promise<SensorStatus> {
   }
 }
 
+/** Which path produced the heading. Shown in the debug panel so a field
+ *  test can tell an iOS compass value from an Android matrix value. */
+export type HeadingSource = 'ios-compass' | 'android-absolute' | 'flat-fallback' | 'none'
+
 export interface CameraPose {
-  /** True-north heading of the camera axis, or null when untrustworthy. */
-  heading: number | null
+  /** Magnetic heading of the camera axis, or null when untrustworthy.
+   *  Declination is applied by the caller — whether iOS already reports
+   *  true north is exactly what the field test has to settle. */
+  magneticHeading: number | null
+  source: HeadingSource
   /** Degrees above (+) / below (-) the horizon, or null without beta/gamma. */
   pitch: number | null
   /** Screen roll in degrees, positive = top of phone leans right. */
   roll: number | null
+  /** The raw event fields, for the debug panel. */
+  raw: OrientationReading
+}
+
+function sourceOf(r: OrientationReading, heading: number | null): HeadingSource {
+  if (heading === null) return 'none'
+  if (typeof r.webkitCompassHeading === 'number') return 'ios-compass'
+  if (typeof r.beta === 'number' && typeof r.gamma === 'number') return 'android-absolute'
+  return 'flat-fallback'
 }
 
 /** Subscribe to the camera's pose. Returns an unsubscribe function. */
@@ -59,7 +75,14 @@ export function subscribeCameraPose(onPose: (pose: CameraPose) => void): () => v
         .webkitCompassHeading,
     }
     const pr = pitchRollFromReading(r)
-    onPose({ heading: trueHeadingFromReading(r), pitch: pr?.pitch ?? null, roll: pr?.roll ?? null })
+    const magneticHeading = magneticHeadingFromReading(r)
+    onPose({
+      magneticHeading,
+      source: sourceOf(r, magneticHeading),
+      pitch: pr?.pitch ?? null,
+      roll: pr?.roll ?? null,
+      raw: r,
+    })
   }
   // Android Chrome fires 'deviceorientationabsolute' with absolute=true and
   // plain 'deviceorientation' with relative alpha. iOS only has the latter but

@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Spot } from '../types/spot'
-import { bearingDelta, normalizeBearing, overlayPlacement, smoothBearing, smoothLinear } from '../lib/heading'
-import { initialSensorStatus, requestOrientationPermission, subscribeCameraPose, type SensorStatus } from '../lib/sensors'
+import { bearingDelta, magneticToTrue, normalizeBearing, overlayPlacement, smoothBearing, smoothLinear } from '../lib/heading'
+import {
+  initialSensorStatus,
+  requestOrientationPermission,
+  subscribeCameraPose,
+  type CameraPose,
+  type HeadingSource,
+  type SensorStatus,
+} from '../lib/sensors'
 import { startRearCamera, stopStream, type CameraError } from '../lib/camera'
 import { spotImageUrl } from '../lib/spots'
 import { newTrialId, saveTrial, type Anchor, type Trial, type TrialResult } from '../lib/trials'
@@ -41,10 +48,18 @@ export function AlignScreen({
   const [phase, setPhase] = useState<Phase>('idle')
   const [cameraError, setCameraError] = useState<CameraError | null>(null)
   const [sensor, setSensor] = useState<SensorStatus>(() => initialSensorStatus())
-  const [heading, setHeading] = useState<number | null>(null) // smoothed true heading
+  const [heading, setHeading] = useState<number | null>(null) // smoothed MAGNETIC heading
   const [pitch, setPitch] = useState<number | null>(null) // smoothed, deg above horizon
   const [roll, setRoll] = useState<number | null>(null) // smoothed, deg
   const [gotAnyReading, setGotAnyReading] = useState(false)
+  const [source, setSource] = useState<HeadingSource>('none')
+  const [lastPose, setLastPose] = useState<CameraPose | null>(null)
+
+  // Field-test instrumentation (review #1). Whether iOS's compass value is
+  // already true north is unknown; the tester flips this on site and reads
+  // which setting puts a north-facing phone at 0°.
+  const [showDebug, setShowDebug] = useState(false)
+  const [applyDeclination, setApplyDeclination] = useState(true)
 
   // User-adjustable knobs. They are not written back to the spot file, but
   // they ARE captured on every trial so we learn how far off the sensors were.
@@ -61,7 +76,8 @@ export function AlignScreen({
   const savedRef = useRef(false)
 
   const target = spot.viewpoint.heading_deg
-  const effectiveHeading = heading === null ? null : normalizeBearing(heading + trimDeg)
+  const trueHeading = heading === null ? null : applyDeclination ? magneticToTrue(heading) : heading
+  const effectiveHeading = trueHeading === null ? null : normalizeBearing(trueHeading + trimDeg)
   const delta = effectiveHeading === null ? null : bearingDelta(effectiveHeading, target)
 
   const buildTrial = useCallback(
@@ -171,9 +187,11 @@ export function AlignScreen({
         sRoll = smoothLinear(sRoll, pose.roll)
         setRoll(sRoll)
       }
-      if (pose.heading === null) return
+      setLastPose(pose)
+      if (pose.magneticHeading === null) return
       setGotAnyReading(true)
-      sHeading = smoothBearing(sHeading, pose.heading)
+      setSource(pose.source)
+      sHeading = smoothBearing(sHeading, pose.magneticHeading)
       setHeading(sHeading)
     })
     return unsub
@@ -245,7 +263,31 @@ export function AlignScreen({
         <span className="rounded bg-black/50 px-3 py-1">
           {photo.title.ko} · {photo.year ?? '?'}
         </span>
+        <button
+          type="button"
+          onClick={() => setShowDebug((v) => !v)}
+          aria-label="센서 디버그"
+          className={`rounded px-3 py-1 ${showDebug ? 'bg-amber-400 text-black' : 'bg-black/50'}`}
+        >
+          ⚙
+        </button>
       </header>
+
+      {showDebug && (
+        <DebugPanel
+          pose={lastPose}
+          source={source}
+          sensor={sensor}
+          magnetic={heading}
+          trueHeading={trueHeading}
+          pitch={pitch}
+          roll={roll}
+          target={target}
+          placement={placement}
+          applyDeclination={applyDeclination}
+          onToggleDeclination={() => setApplyDeclination((v) => !v)}
+        />
+      )}
 
       {phase === 'idle' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/80 p-6 text-center">
@@ -339,6 +381,66 @@ export function AlignScreen({
         </div>
       )}
     </main>
+  )
+}
+
+function fmt(n: number | null | undefined, digits = 1): string {
+  return typeof n === 'number' && Number.isFinite(n) ? n.toFixed(digits) : '—'
+}
+
+/** Raw sensor values and every derived number, so a field test can see
+ *  which assumption is wrong instead of guessing. Portrait, top-left. */
+function DebugPanel({
+  pose,
+  source,
+  sensor,
+  magnetic,
+  trueHeading,
+  pitch,
+  roll,
+  target,
+  placement,
+  applyDeclination,
+  onToggleDeclination,
+}: {
+  pose: CameraPose | null
+  source: HeadingSource
+  sensor: SensorStatus
+  magnetic: number | null
+  trueHeading: number | null
+  pitch: number | null
+  roll: number | null
+  target: number
+  placement: { dx: number; dy: number; rotate: number }
+  applyDeclination: boolean
+  onToggleDeclination: () => void
+}) {
+  const r = pose?.raw
+  return (
+    <div className="absolute top-14 left-3 z-10 w-56 space-y-1 rounded bg-black/80 p-2 font-mono text-[11px] leading-tight text-neutral-200">
+      <div className="text-neutral-400">권한 {sensor} · 소스 {source}</div>
+      <div>α {fmt(r?.alpha)} β {fmt(r?.beta)} γ {fmt(r?.gamma)}</div>
+      <div>
+        abs {String(r?.absolute ?? '—')} · webkit {fmt(r?.webkitCompassHeading)}
+      </div>
+      <div className="border-t border-neutral-700 pt-1">
+        자북 {fmt(magnetic)}° → 진북 {fmt(trueHeading)}° (목표 {target}°)
+      </div>
+      <div>
+        pitch {fmt(pitch)}° roll {fmt(roll)}°
+      </div>
+      <div>
+        dx {fmt(placement.dx, 0)} dy {fmt(placement.dy, 0)} rot {fmt(placement.rotate)}
+      </div>
+      <button
+        type="button"
+        onClick={onToggleDeclination}
+        className={`mt-1 w-full rounded px-2 py-1 ${applyDeclination ? 'bg-amber-400 text-black' : 'bg-neutral-700'}`}
+      >
+        편각 −8.5° {applyDeclination ? '적용 중' : '미적용'}
+      </button>
+      <div className="text-neutral-500">북쪽 보고 진북이 0°인 쪽이 정답</div>
+    </div>
   )
 }
 
