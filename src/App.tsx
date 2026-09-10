@@ -3,6 +3,7 @@ import { spots } from './lib/spots'
 import type { Spot } from './types/spot'
 import { SpotMap } from './components/SpotMap'
 import { AlignScreen } from './components/AlignScreen'
+import { TrialPanel } from './components/TrialPanel'
 
 // The four MVP screens (PLATFORM_COMPARISON.md §6). Only Home is real yet;
 // the others are placeholders that receive the selected spot so the
@@ -34,7 +35,11 @@ export default function App() {
         <AlignScreen
           spot={screen.spot}
           onBack={() => setScreen({ name: 'guide', spot: screen.spot })}
-          onNext={() => setScreen({ name: 'share', spot: screen.spot })}
+          // A successful trial continues to sharing; a failed one goes home so
+          // the next participant starts clean.
+          onDone={(trial) =>
+            setScreen(trial.result === 'success' ? { name: 'share', spot: screen.spot } : { name: 'home' })
+          }
         />
       )
     case 'share':
@@ -77,6 +82,7 @@ function Home({ onSelect }: { onSelect: (spot: Spot) => void }) {
           <li className="px-4 py-3 text-sm text-neutral-500">spots/ 폴더에 스팟이 없음</li>
         )}
       </ul>
+      <TrialPanel />
     </main>
   )
 }

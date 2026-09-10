@@ -4,6 +4,7 @@ import { bearingDelta, normalizeBearing, overlayOffsetPx, smoothBearing } from '
 import { initialSensorStatus, requestOrientationPermission, subscribeTrueHeading, type SensorStatus } from '../lib/sensors'
 import { startRearCamera, stopStream, type CameraError } from '../lib/camera'
 import { spotImageUrl } from '../lib/spots'
+import { newTrialId, saveTrial, type Anchor, type Trial, type TrialResult } from '../lib/trials'
 
 // Phones do not expose their camera FOV. 65° is a typical rear-camera value
 // in portrait; the user can correct it with the scale slider.
@@ -11,9 +12,27 @@ const DEFAULT_CAMERA_HFOV = 65
 // Within this many degrees we call it "aligned" and hide the turn arrow.
 const ALIGNED_TOLERANCE_DEG = 4
 
-type Phase = 'idle' | 'starting' | 'live'
+type Phase = 'idle' | 'starting' | 'live' | 'verdict'
 
-export function AlignScreen({ spot, onBack, onNext }: { spot: Spot; onBack: () => void; onNext: () => void }) {
+const ANCHOR_OPTIONS: { key: Anchor; label: string }[] = [
+  { key: 'ridge', label: '산 능선' },
+  { key: 'road', label: '도로·길' },
+  { key: 'building', label: '건물 윤곽' },
+  { key: 'water', label: '물길·다리' },
+  { key: 'other', label: '기타' },
+  { key: 'unsure', label: '모르겠음' },
+]
+
+export function AlignScreen({
+  spot,
+  onBack,
+  onDone,
+}: {
+  spot: Spot
+  onBack: () => void
+  /** Called once per trial after it is saved. */
+  onDone: (trial: Trial) => void
+}) {
   const photo = spot.historical[0]
   const videoRef = useRef<HTMLVideoElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -25,16 +44,57 @@ export function AlignScreen({ spot, onBack, onNext }: { spot: Spot; onBack: () =
   const [heading, setHeading] = useState<number | null>(null) // smoothed true heading
   const [gotAnyReading, setGotAnyReading] = useState(false)
 
-  // User-adjustable knobs. All stay in the UI; nothing here is written back
-  // to the spot file — the surveyor records what worked in notes by hand.
+  // User-adjustable knobs. They are not written back to the spot file, but
+  // they ARE captured on every trial so we learn how far off the sensors were.
   const [trimDeg, setTrimDeg] = useState(0) // manual compass correction, ±45
   const [cameraHfov, setCameraHfov] = useState(DEFAULT_CAMERA_HFOV)
   const [opacity, setOpacity] = useState(0.6)
   const [reveal, setReveal] = useState(50) // slider: % of width showing the old photo
   const [imageMissing, setImageMissing] = useState(false)
 
+  // Trial timing. Starts on the "카메라 켜기" tap, ends on the verdict tap.
+  const trialStart = useRef<{ id: string; at: number; iso: string } | null>(null)
+  const [pendingResult, setPendingResult] = useState<TrialResult | null>(null)
+  const [anchors, setAnchors] = useState<Anchor[]>([])
+  const savedRef = useRef(false)
+
+  const target = spot.viewpoint.heading_deg
+  const effectiveHeading = heading === null ? null : normalizeBearing(heading + trimDeg)
+  const delta = effectiveHeading === null ? null : bearingDelta(effectiveHeading, target)
+
+  const buildTrial = useCallback(
+    (result: TrialResult, chosen: Anchor[]): Trial | null => {
+      const s = trialStart.current
+      if (!s) return null
+      return {
+        id: s.id,
+        spot_id: spot.id,
+        photo_id: photo.id,
+        started_at: s.iso,
+        ms: Date.now() - s.at,
+        result,
+        anchors: chosen,
+        trim_deg: trimDeg,
+        camera_hfov: cameraHfov,
+        opacity,
+        final_heading_deg: effectiveHeading,
+        final_delta_deg: delta,
+        sensor,
+        ua: navigator.userAgent,
+      }
+    },
+    [spot.id, photo.id, trimDeg, cameraHfov, opacity, effectiveHeading, delta, sensor],
+  )
+
+  const stopCamera = useCallback(() => {
+    stopStream(streamRef.current)
+    streamRef.current = null
+  }, [])
+
   const start = useCallback(async () => {
     setPhase('starting')
+    trialStart.current = { id: newTrialId(), at: Date.now(), iso: new Date().toISOString() }
+    savedRef.current = false
     // Order matters on iOS: both prompts must come from the same tap.
     const s = await requestOrientationPermission()
     setSensor(s)
@@ -44,12 +104,54 @@ export function AlignScreen({ spot, onBack, onNext }: { spot: Spot; onBack: () =
     if (typeof r === 'string') {
       setCameraError(r)
       setPhase('idle')
+      trialStart.current = null
       return
     }
     streamRef.current = r
     setCameraError(null)
     setPhase('live')
   }, [])
+
+  /** Participant tapped 맞았다 / 못 맞췄다. Camera stops; anchors asked next. */
+  const verdict = useCallback(
+    (result: TrialResult) => {
+      stopCamera()
+      setPendingResult(result)
+      setAnchors([])
+      setPhase('verdict')
+    },
+    [stopCamera],
+  )
+
+  /** Anchor question answered. Persist and hand off. */
+  const finish = useCallback(() => {
+    if (!pendingResult || savedRef.current) return
+    // A "success" backed only by "모르겠음" is not a success (TEST_PROTOCOL §2).
+    const onlyUnsure = anchors.length > 0 && anchors.every((a) => a === 'unsure')
+    const result: TrialResult = pendingResult === 'success' && (anchors.length === 0 || onlyUnsure) ? 'fail' : pendingResult
+    const t = buildTrial(result, anchors)
+    if (!t) return
+    savedRef.current = true
+    saveTrial(t)
+    onDone(t)
+  }, [pendingResult, anchors, buildTrial, onDone])
+
+  /** Leaving mid-trial (back button, tab hidden) is recorded as abandon. */
+  const abandon = useCallback(() => {
+    if (trialStart.current && !savedRef.current && phase !== 'verdict') {
+      const t = buildTrial('abandon', [])
+      if (t) {
+        savedRef.current = true
+        saveTrial(t)
+      }
+    }
+    stopCamera()
+  }, [phase, buildTrial, stopCamera])
+
+  const back = useCallback(() => {
+    abandon()
+    onBack()
+  }, [abandon, onBack])
 
   useEffect(() => {
     if (phase !== 'live' || sensor !== 'granted') return
@@ -64,26 +166,19 @@ export function AlignScreen({ spot, onBack, onNext }: { spot: Spot; onBack: () =
   }, [phase, sensor])
 
   useEffect(() => {
-    const stop = () => {
-      stopStream(streamRef.current)
-      streamRef.current = null
-    }
     const onVisibility = () => {
-      if (document.hidden) {
-        stop()
+      if (document.hidden && phase === 'live') {
+        abandon()
         setPhase('idle')
       }
     }
     document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility)
-      stop()
-    }
-  }, [])
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [phase, abandon])
 
-  const target = spot.viewpoint.heading_deg
-  const effectiveHeading = heading === null ? null : normalizeBearing(heading + trimDeg)
-  const delta = effectiveHeading === null ? null : bearingDelta(effectiveHeading, target)
+  // Unmount: stop the camera. Abandon bookkeeping is handled by `back`.
+  useEffect(() => stopCamera, [stopCamera])
+
   const frameW = frameRef.current?.clientWidth ?? 0
   const offsetPx = effectiveHeading === null ? 0 : overlayOffsetPx(effectiveHeading, target, cameraHfov, frameW)
   const overlayScale = spot.viewpoint.hfov_deg / cameraHfov
@@ -120,7 +215,7 @@ export function AlignScreen({ spot, onBack, onNext }: { spot: Spot; onBack: () =
       </div>
 
       <header className="absolute inset-x-0 top-0 flex items-center justify-between p-3 text-sm">
-        <button type="button" onClick={onBack} className="rounded bg-black/50 px-3 py-1">← 뒤로</button>
+        <button type="button" onClick={back} className="rounded bg-black/50 px-3 py-1">← 뒤로</button>
         <span className="rounded bg-black/50 px-3 py-1">
           {photo.title.ko} · {photo.year ?? '?'}
         </span>
@@ -164,15 +259,58 @@ export function AlignScreen({ spot, onBack, onNext }: { spot: Spot; onBack: () =
             <Slider label={`투명도 ${Math.round(opacity * 100)}%`} min={0.1} max={1} step={0.05} value={opacity} onChange={setOpacity} />
             <Slider label={`방위 보정 ${trimDeg > 0 ? '+' : ''}${trimDeg}°`} min={-45} max={45} step={1} value={trimDeg} onChange={setTrimDeg} />
             <Slider label={`카메라 화각 ${cameraHfov}°`} min={40} max={100} step={1} value={cameraHfov} onChange={setCameraHfov} />
-            <button
-              type="button"
-              onClick={onNext}
-              className="mt-1 w-full rounded-lg bg-amber-400 py-3 text-base font-semibold text-black"
-            >
-              이 장면 공유
-            </button>
+            <div className="mt-1 flex gap-2">
+              <button
+                type="button"
+                onClick={() => verdict('fail')}
+                className="flex-1 rounded-lg bg-neutral-700 py-3 text-base font-semibold"
+              >
+                못 맞췄다
+              </button>
+              <button
+                type="button"
+                onClick={() => verdict('success')}
+                className="flex-1 rounded-lg bg-amber-400 py-3 text-base font-semibold text-black"
+              >
+                맞았다
+              </button>
+            </div>
           </div>
         </>
+      )}
+
+      {phase === 'verdict' && (
+        <div className="absolute inset-0 flex flex-col justify-center gap-4 bg-black/90 p-6">
+          <h2 className="text-lg font-semibold">
+            {pendingResult === 'success' ? '무엇이 겹쳐 보였나요?' : '무엇을 맞추려고 했나요?'}
+          </h2>
+          <p className="text-sm text-neutral-400">해당하는 것 모두 선택</p>
+          <div className="flex flex-wrap gap-2">
+            {ANCHOR_OPTIONS.map((o) => {
+              const on = anchors.includes(o.key)
+              return (
+                <button
+                  key={o.key}
+                  type="button"
+                  onClick={() =>
+                    setAnchors((prev) => (on ? prev.filter((a) => a !== o.key) : [...prev, o.key]))
+                  }
+                  className={`rounded-full px-4 py-2 text-sm ${on ? 'bg-amber-400 text-black' : 'bg-neutral-800'}`}
+                >
+                  {o.label}
+                </button>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={finish}
+            disabled={anchors.length === 0}
+            className="mt-4 rounded-lg bg-amber-400 py-3 font-semibold text-black disabled:opacity-40"
+          >
+            기록하고 계속
+          </button>
+        </div>
       )}
     </main>
   )
