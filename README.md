@@ -27,6 +27,7 @@
 
 | 문서 | 내용 |
 |---|---|
+| [BACKLOG.md](BACKLOG.md) | **내일 할 일.** 순서대로, 완료 기준 포함 |
 | [PRD.md](PRD.md) | 무엇을 · 누구를 위해 · 왜. 성공 기준, 제약, 리스크 |
 | [MVP.md](MVP.md) | 실제로 만들 최소 범위. 완료의 정의. 보류 목록 |
 | [BENCHMARK_CITY_IN_TIME.md](BENCHMARK_CITY_IN_TIME.md) | 홍콩 실물 사인 분석 — 거리 마커 층, Phase 0 판정 기준 재작성 근거 |
