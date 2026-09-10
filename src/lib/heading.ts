@@ -56,6 +56,27 @@ export function magneticHeadingFromReading(r: OrientationReading): number | null
   return normalizeBearing(360 - r.alpha)
 }
 
+/** Exponential smoothing that respects the 359→0 wrap. `alpha` in (0, 1]:
+ *  1 = no smoothing. Returns the new smoothed bearing. */
+export function smoothBearing(prev: number | null, next: number, alpha = 0.25): number {
+  if (prev === null) return normalizeBearing(next)
+  return normalizeBearing(prev + alpha * bearingDelta(prev, next))
+}
+
+/** Horizontal pixel offset to draw an overlay whose centre should sit at
+ *  `targetDeg` when the camera currently points at `currentDeg`, given the
+ *  camera's horizontal field of view across `frameWidthPx`. Positive = the
+ *  target is to the right of centre. */
+export function overlayOffsetPx(
+  currentDeg: number,
+  targetDeg: number,
+  cameraHfovDeg: number,
+  frameWidthPx: number,
+): number {
+  const pxPerDeg = frameWidthPx / cameraHfovDeg
+  return bearingDelta(currentDeg, targetDeg) * pxPerDeg
+}
+
 /** Full pipeline: sensor reading → true-north bearing, or null. */
 export function trueHeadingFromReading(
   r: OrientationReading,

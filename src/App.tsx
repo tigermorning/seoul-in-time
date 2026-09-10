@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { spots } from './lib/spots'
 import type { Spot } from './types/spot'
 import { SpotMap } from './components/SpotMap'
+import { AlignScreen } from './components/AlignScreen'
 
 // The four MVP screens (PLATFORM_COMPARISON.md §6). Only Home is real yet;
 // the others are placeholders that receive the selected spot so the
@@ -30,12 +31,10 @@ export default function App() {
       )
     case 'align':
       return (
-        <Placeholder
-          title="정렬"
-          body="카메라 + 오버레이 + 나침반. 다음 단계에서 구현."
+        <AlignScreen
+          spot={screen.spot}
           onBack={() => setScreen({ name: 'guide', spot: screen.spot })}
           onNext={() => setScreen({ name: 'share', spot: screen.spot })}
-          nextLabel="공유"
         />
       )
     case 'share':

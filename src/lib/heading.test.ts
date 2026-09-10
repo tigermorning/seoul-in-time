@@ -4,8 +4,34 @@ import {
   magneticHeadingFromReading,
   magneticToTrue,
   normalizeBearing,
+  overlayOffsetPx,
+  smoothBearing,
   trueHeadingFromReading,
 } from './heading'
+
+describe('smoothBearing', () => {
+  it('starts at the first sample', () => {
+    expect(smoothBearing(null, 42)).toBe(42)
+  })
+  it('moves a fraction of the way toward the next sample', () => {
+    expect(smoothBearing(0, 40, 0.25)).toBe(10)
+  })
+  it('does not spin the long way around the wrap', () => {
+    // 350 → 10 is a 20° clockwise turn, so one step at 0.5 lands on 0, not 180.
+    expect(smoothBearing(350, 10, 0.5)).toBe(0)
+  })
+})
+
+describe('overlayOffsetPx', () => {
+  it('is zero when aligned', () => {
+    expect(overlayOffsetPx(90, 90, 60, 600)).toBe(0)
+  })
+  it('shifts the overlay right when the target is to the right', () => {
+    // 10° right of centre at 10 px/deg
+    expect(overlayOffsetPx(90, 100, 60, 600)).toBe(100)
+    expect(overlayOffsetPx(355, 5, 60, 600)).toBe(100)
+  })
+})
 
 describe('normalizeBearing', () => {
   it('wraps into [0, 360)', () => {

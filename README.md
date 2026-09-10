@@ -19,7 +19,7 @@
 | MVP 범위 정의 | ✅ 초안 |
 | 플랫폼 선택 | ✅ **웹 PWA** — Vite + React 19 + TS + Tailwind 4, GitHub Pages, Leaflet ([§5·§6](PLATFORM_COMPARISON.md)) |
 | 사진 라이선스 게이트 | ✅ **조건부 통과** — [LICENSE_GATE.md](LICENSE_GATE.md) |
-| 구현 | 🔧 스캐폴딩 완료 — 홈(지도+목록) 동작, 정렬·공유 화면은 자리표시 |
+| 구현 | 🔧 홈 + **정렬 프로토타입** 동작 (카메라·나침반·오버레이·슬라이더). 공유 화면은 자리표시. **실기기 미검증** |
 
 ---
 
@@ -51,8 +51,9 @@
 5. ~~스캐폴딩~~ 완료. 남은 병렬 작업:
    - 콘텐츠: 청계천 광교 `historical[]` 채우기 (시대 3개), 촬영 지점 역산, 현장 답사
    - 코드: GitHub 저장소 생성 + Pages 활성화
-6. 정렬 프로토타입 — 카메라 + 오버레이 + 나침반 유도 + 수동 미세조정 + 슬라이더
-7. 공유 화면 — 합성 + Web Share
+6. ~~정렬 프로토타입~~ 코드 완료. **폰에서 검증 필요** — 데스크톱·인앱 브라우저는 카메라를 막아 권한 거부 경로만 확인됨
+7. `public/spots/cheonggyecheon-gwanggyo/1964-covering-opening.jpg` 배치 (아직 없음 → 정렬 화면에 "사진 파일 없음" 표시)
+8. 공유 화면 — 합성 + Web Share
 
 ---
 
@@ -102,8 +103,11 @@ spots/*.json            스팟 데이터 (플랫폼 중립, 스키마: schema/)
 src/types/spot.ts       스키마의 TS 타입
 src/lib/spots.ts        spots/*.json 로더
 src/lib/heading.ts      나침반 수학 (순수 함수, 테스트 있음)
+src/lib/sensors.ts      DeviceOrientation 권한·구독 (iOS/Android 분기)
+src/lib/camera.ts       getUserMedia 후면 카메라
 src/components/SpotMap  Leaflet 지도
-src/App.tsx             화면 4개 상태 전환 (홈만 구현, 나머지 자리표시)
+src/components/AlignScreen  정렬 화면: 카메라 위 옛 사진 오버레이 + 나침반 유도 + 슬라이더 4개
+src/App.tsx             화면 4개 상태 전환 (공유만 자리표시)
 scripts/validate-spots  스키마 + 교차 규칙 검증
 ```
 

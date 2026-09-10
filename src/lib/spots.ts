@@ -14,3 +14,10 @@ export const spots: Spot[] = Object.values(modules).sort((a, b) =>
 export function findSpot(id: string): Spot | undefined {
   return spots.find((s) => s.id === id)
 }
+
+/** Images are served from public/spots/<id>/ so they are plain static files
+ *  and never bundled. BASE_URL keeps this correct under the GitHub Pages
+ *  sub-path. */
+export function spotImageUrl(spot: Spot, file: string): string {
+  return `${import.meta.env.BASE_URL}spots/${spot.id}/${file}`
+}

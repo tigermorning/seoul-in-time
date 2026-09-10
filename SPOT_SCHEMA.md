@@ -11,11 +11,15 @@
 ```
 spots/
   cheonggyecheon-gwanggyo.json     ← 스팟 정의
-  cheonggyecheon-gwanggyo/         ← 그 스팟의 이미지 (파생본만 커밋)
+public/spots/
+  cheonggyecheon-gwanggyo/         ← 그 스팟의 이미지 (파생본만 커밋, 정적 서빙)
     1964-covering-opening.jpg
     stand-here.jpg
 archive-raw/                       ← 아카이브 원본. gitignore. 커밋 안 함
 ```
+
+이미지가 `public/` 아래인 이유: 번들에 안 들어가고 그대로 서빙됨. 앱은
+`/spots/<id>/<file>` 경로로 읽는다.
 
 코드는 `spots/*.json`을 읽는다. 플랫폼이 바뀌어도 이 폴더는 그대로 간다.
 
