@@ -31,6 +31,9 @@
 | [MVP.md](MVP.md) | 실제로 만들 최소 범위. 완료의 정의. 보류 목록 |
 | [PLATFORM_COMPARISON.md](PLATFORM_COMPARISON.md) | 웹 PWA / Flutter / Unity AR / 웹AR 비교 및 권장안 |
 | [LICENSE_GATE.md](LICENSE_GATE.md) | 사진 라이선스 확보 가능성 조사 결과 · 소스별 판정 |
+| [SPOT_SCHEMA.md](SPOT_SCHEMA.md) | 스팟 데이터 스키마 v1 설명 — 콘텐츠 작업자용 |
+| [schema/spot.schema.json](schema/spot.schema.json) | 스키마 기계 정의 (JSON Schema 2020-12) |
+| [spots/](spots/) | 스팟 데이터. 현재 청계천 광교 draft 1건 |
 
 ---
 
@@ -44,10 +47,17 @@
    서울기록원 2000px + "이용유형 제한없음"(배지 없음, 보도자료로 상업·변형 허용
    확인). 상업화 전 서울기록원 서면 확인 1회 남음
 3. ~~플랫폼 확정~~ 완료 — 웹 PWA, 스택 [PLATFORM_COMPARISON.md §6](PLATFORM_COMPARISON.md)
-4. 스팟 데이터 스키마 확정 → [PLATFORM_COMPARISON.md §4](PLATFORM_COMPARISON.md)
-5. 프로젝트 스캐폴딩 (Vite + React + TS + Tailwind + PWA + Pages 배포)
-6. 스팟 1곳(청계천 권장 — 자료 26건 확인됨) 콘텐츠 제작
-7. 정렬 프로토타입 구현
+4. ~~스팟 데이터 스키마 확정~~ 완료 — [SPOT_SCHEMA.md](SPOT_SCHEMA.md)
+5. **병렬 시작 가능:**
+   - 콘텐츠: 청계천 광교 `historical[]` 채우기 (시대 3개), 촬영 지점 역산, 현장 답사
+   - 코드: 프로젝트 스캐폴딩 (Vite + React + TS + Tailwind + PWA + Pages 배포) + 스키마 검증 스크립트
+6. 정렬 프로토타입 구현
+
+### 스팟 JSON 검증
+
+```bash
+npx -y -p ajv-cli@5 -p ajv-formats@2 ajv validate --spec=draft2020 -c ajv-formats -s schema/spot.schema.json -d "spots/*.json"
+```
 
 ---
 

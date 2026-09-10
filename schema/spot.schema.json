@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tigermorning/seoul-in-time/schema/spot.schema.json",
+  "title": "Spot",
+  "description": "One physical viewpoint in Seoul with one or more historical photographs aligned to it. Platform-neutral: no pixel or CSS values, only geographic, angular and normalized (0..1) quantities.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "status", "name", "viewpoint", "guide", "historical"],
+  "properties": {
+    "schema_version": { "const": 1 },
+
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Stable slug. Never renamed once published; it is the share URL."
+    },
+
+    "status": {
+      "type": "string",
+      "enum": ["draft", "surveyed", "published"],
+      "description": "draft = data being filled in; surveyed = viewpoint verified on site; published = visible in the app."
+    },
+
+    "name": {
+      "type": "object",
+      "required": ["ko"],
+      "additionalProperties": false,
+      "properties": {
+        "ko": { "type": "string", "minLength": 1 },
+        "en": { "type": "string" }
+      }
+    },
+
+    "viewpoint": {
+      "type": "object",
+      "description": "Where the user must stand and which way to look for the primary historical photo to align.",
+      "required": ["lat", "lng", "heading_deg", "hfov_deg", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "lat": { "type": "number", "minimum": 37.4, "maximum": 37.7 },
+        "lng": { "type": "number", "minimum": 126.7, "maximum": 127.2 },
+        "heading_deg": {
+          "type": "number", "minimum": 0, "exclusiveMaximum": 360,
+          "description": "Compass bearing of the camera's optical axis, degrees clockwise from TRUE north. Magnetic declination is applied by the app, never baked in here."
+        },
+        "pitch_deg": {
+          "type": "number", "minimum": -90, "maximum": 90, "default": 0,
+          "description": "Tilt above (+) or below (-) horizontal."
+        },
+        "hfov_deg": {
+          "type": "number", "minimum": 10, "maximum": 120,
+          "description": "Horizontal field of view of the historical photo as estimated from its content. Drives how much of the live camera frame the overlay should cover."
+        },
+        "eye_height_m": { "type": "number", "minimum": 0.5, "maximum": 30, "default": 1.6 },
+        "confidence": {
+          "type": "string",
+          "enum": ["rough", "estimated", "surveyed"],
+          "description": "rough = guessed from the map; estimated = derived from landmarks in the photo; surveyed = verified on site with a phone."
+        },
+        "surveyed_at": { "type": ["string", "null"], "format": "date" },
+        "notes": { "type": "string", "description": "How the position and heading were derived. Free text, Korean." }
+      }
+    },
+
+    "guide": {
+      "type": "object",
+      "description": "What the app shows to get the user into position before the camera opens.",
+      "required": ["instruction"],
+      "additionalProperties": false,
+      "properties": {
+        "instruction": {
+          "type": "object", "required": ["ko"], "additionalProperties": false,
+          "properties": { "ko": { "type": "string", "minLength": 1 }, "en": { "type": "string" } }
+        },
+        "stand_here_image": {
+          "type": ["string", "null"],
+          "description": "Relative path under /spots/<id>/ to a present-day photo of the exact standing position."
+        },
+        "landmarks": {
+          "type": "array",
+          "description": "Things still standing today that the user can use to confirm the heading. Order = importance.",
+          "items": {
+            "type": "object", "required": ["label"], "additionalProperties": false,
+            "properties": {
+              "label": { "type": "object", "required": ["ko"], "properties": { "ko": { "type": "string" }, "en": { "type": "string" } } },
+              "bearing_deg": { "type": "number", "minimum": 0, "exclusiveMaximum": 360 }
+            }
+          }
+        }
+      }
+    },
+
+    "present": {
+      "type": ["object", "null"],
+      "description": "A pre-shot present-day photo from the viewpoint, for remote mode (users not on site). Optional until published.",
+      "required": ["file", "taken_at"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string" },
+        "taken_at": { "type": "string", "format": "date" }
+      }
+    },
+
+    "historical": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Historical photographs for this viewpoint, oldest first. The first entry is the primary alignment target; later entries appear on the period selector.",
+      "items": { "$ref": "#/$defs/historicalPhoto" }
+    }
+  },
+
+  "$defs": {
+    "historicalPhoto": {
+      "type": "object",
+      "required": ["id", "title", "year", "year_precision", "media_type", "image", "source", "license"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Slug local to this spot, e.g. 1964-opening." },
+        "title": { "type": "object", "required": ["ko"], "properties": { "ko": { "type": "string" }, "en": { "type": "string" } } },
+        "year": { "type": ["integer", "null"], "minimum": 1860, "maximum": 2000, "description": "null when the archive gives no date at all." },
+        "year_precision": { "type": "string", "enum": ["exact", "circa", "decade", "unknown"] },
+        "date": { "type": ["string", "null"], "format": "date", "description": "Full date when the archive provides one (Seoul Metropolitan Archives usually does)." },
+        "media_type": {
+          "type": "string",
+          "enum": ["photo", "tinted_postcard", "drawing", "aerial"],
+          "description": "Hand-tinted postcards are common in the 1910s-30s material; the UI labels them so users do not mistake tinting for colour photography."
+        },
+        "description": { "type": "object", "properties": { "ko": { "type": "string" }, "en": { "type": "string" } }, "description": "The archive's own caption, verbatim. Often the best clue for camera position." },
+
+        "image": {
+          "type": "object",
+          "required": ["file"],
+          "additionalProperties": false,
+          "properties": {
+            "file": { "type": "string", "description": "Base filename under /spots/<id>/. The image pipeline derives sizes from it; do not put a size suffix here." },
+            "original_ref": { "type": "string", "description": "Where the master came from (archive URL or download endpoint). Master itself lives in /archive-raw/ and is not committed." },
+            "original_px": {
+              "type": "object", "required": ["w", "h"],
+              "properties": { "w": { "type": "integer" }, "h": { "type": "integer" } }
+            },
+            "crop": {
+              "type": ["object", "null"],
+              "description": "Normalized (0..1) sub-rectangle of the master used for alignment, to remove frames, captions or postcard borders. null = whole image.",
+              "required": ["x", "y", "w", "h"],
+              "properties": {
+                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                "y": { "type": "number", "minimum": 0, "maximum": 1 },
+                "w": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+                "h": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+              }
+            }
+          }
+        },
+
+        "source": {
+          "type": "object",
+          "required": ["org", "archive_id", "url"],
+          "additionalProperties": false,
+          "properties": {
+            "org": { "type": "string", "enum": ["서울역사박물관", "서울기록원", "서울연구원", "국가기록원", "기타"] },
+            "archive_id": { "type": "string", "description": "The archive's own identifier, e.g. H-TRNS-103296-809 or RG5-SR79-IT329." },
+            "url": { "type": "string", "format": "uri", "description": "Detail page. Must stay reachable; it is shown to users as the original link." },
+            "producer": { "type": "string", "description": "As stated by the archive, e.g. 서울특별시 공보실." }
+          }
+        },
+
+        "license": {
+          "type": "object",
+          "required": ["type", "evidence", "evidence_url", "attribution"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["KOGL-1", "CC-BY-4.0", "PUBLIC-DOMAIN"],
+              "description": "Only licenses that allow commercial use AND derivatives are listed. If a photo is KOGL-2/3/4 it does not enter this file."
+            },
+            "evidence": {
+              "type": "string",
+              "enum": ["badge", "metadata", "statement"],
+              "description": "badge = KOGL mark on the record page; metadata = record says 이용유형 제한없음 etc.; statement = institutional statement covering the collection (weaker; requires evidence_url)."
+            },
+            "evidence_url": { "type": "string", "format": "uri" },
+            "evidence_quote": { "type": "string", "description": "Verbatim sentence proving the license, captured at collection time." },
+            "attribution": { "type": "string", "minLength": 1, "description": "Exact attribution string the app must display." },
+            "checked_at": { "type": "string", "format": "date" }
+          }
+        },
+
+        "alignment": {
+          "type": "object",
+          "description": "Hints that help the user (and later, code) line the photo up. All positions normalized 0..1 within the cropped image.",
+          "additionalProperties": false,
+          "properties": {
+            "hints": {
+              "type": "array",
+              "items": {
+                "type": "object", "required": ["label"], "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "object", "required": ["ko"], "properties": { "ko": { "type": "string" }, "en": { "type": "string" } } },
+                  "point": {
+                    "type": ["object", "null"],
+                    "required": ["x", "y"],
+                    "properties": { "x": { "type": "number", "minimum": 0, "maximum": 1 }, "y": { "type": "number", "minimum": 0, "maximum": 1 } }
+                  },
+                  "still_exists": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -130,6 +130,10 @@ City in Time과 가장 가까운 구조. **ARCore Geospatial API**는 Google Str
 
 ## 4. 플랫폼과 무관하게 지금 확정할 것 — 스팟 데이터 스키마
 
+> **2026-09-10 확정 → [SPOT_SCHEMA.md](SPOT_SCHEMA.md) · [schema/spot.schema.json](schema/spot.schema.json).**
+> 아래는 최초 초안. 확정본은 `media_type`, `license.evidence*`, `present`,
+> `alignment.hints`, `confidence`가 추가되고 `guide`가 구조화됐다.
+
 이것만 잘 잡으면 플랫폼 전환 비용이 낮게 유지된다. 초안:
 
 ```json

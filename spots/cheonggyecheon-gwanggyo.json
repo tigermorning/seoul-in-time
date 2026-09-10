@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "cheonggyecheon-gwanggyo",
+  "status": "draft",
+  "name": { "ko": "청계천 광교" },
+
+  "viewpoint": {
+    "lat": 37.5695,
+    "lng": 126.9827,
+    "heading_deg": 90,
+    "pitch_deg": 0,
+    "hfov_deg": 60,
+    "eye_height_m": 1.6,
+    "confidence": "rough",
+    "surveyed_at": null,
+    "notes": "광교 위 또는 광교 남단 보도에서 동쪽(하류) 방향을 보는 것으로 가정. 실제 지점은 1964년 개통식 사진의 배경 건물과 대조해 확정해야 함. 좌표는 지도에서 광교 중앙을 찍은 값 — 현장 답사 전까지 rough."
+  },
+
+  "guide": {
+    "instruction": { "ko": "광교 남쪽 끝 보도에 서서 청계천 하류(동쪽) 방향을 바라보세요." },
+    "stand_here_image": null,
+    "landmarks": [
+      { "label": { "ko": "광교 다리 난간" } },
+      { "label": { "ko": "청계천 물길 방향" } }
+    ]
+  },
+
+  "present": null,
+
+  "historical": [
+    {
+      "id": "1964-covering-opening",
+      "title": { "ko": "청계천 복개공사 준공 개통식" },
+      "year": 1964,
+      "year_precision": "exact",
+      "date": "1964-12-04",
+      "media_type": "photo",
+      "description": { "ko": "청계천 복개공사 준공으로 개통식을 가졌다." },
+      "image": {
+        "file": "1964-covering-opening.jpg",
+        "original_ref": "https://archives.seoul.go.kr/item/329",
+        "original_px": { "w": 2000, "h": 1565 },
+        "crop": null
+      },
+      "source": {
+        "org": "서울기록원",
+        "archive_id": "RG5-SR79-IT329",
+        "url": "https://archives.seoul.go.kr/item/329",
+        "producer": "서울특별시 공보실"
+      },
+      "license": {
+        "type": "KOGL-1",
+        "evidence": "metadata",
+        "evidence_url": "https://archives.seoul.go.kr/item/329",
+        "evidence_quote": "법적지위 공공기록 / 접근유형 공개 / 이용유형 제한없음. 서울시 보도자료(2016-02-04): 아카이브 내 모든 사진의 저작권은 서울시에 있기 때문에 출처만 정확하게 표기하면 상업적으로도 이용이 가능하고 변경금지 제한도 없어",
+        "attribution": "본 저작물은 서울기록원에서 개방한 '청계천 복개공사 준공 개통식'(RG5-SR79-IT329, 서울특별시 공보실, 1964)을 이용하였습니다. https://archives.seoul.go.kr/item/329",
+        "checked_at": "2026-09-10"
+      },
+      "alignment": {
+        "hints": []
+      }
+    }
+  ]
+}
