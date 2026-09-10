@@ -17,7 +17,7 @@
 |---|---|
 | PRD 작성 | ✅ 초안 |
 | MVP 범위 정의 | ✅ 초안 |
-| 플랫폼 선택 | ⬜ 미확정 (권장안 있음) |
+| 플랫폼 선택 | ✅ **웹 PWA** — Vite + React 19 + TS + Tailwind 4, GitHub Pages, Leaflet ([§5·§6](PLATFORM_COMPARISON.md)) |
 | 사진 라이선스 게이트 | ✅ **조건부 통과** — [LICENSE_GATE.md](LICENSE_GATE.md) |
 | 구현 | ⬜ 미착수 |
 
@@ -43,10 +43,11 @@
 2. ~~실물 확인~~ 완료 — 서울역사아카이브 2480~4483px + 사진별 제1유형 배지,
    서울기록원 2000px + "이용유형 제한없음"(배지 없음, 보도자료로 상업·변형 허용
    확인). 상업화 전 서울기록원 서면 확인 1회 남음
-3. 플랫폼 확정 → [PLATFORM_COMPARISON.md §5](PLATFORM_COMPARISON.md)
+3. ~~플랫폼 확정~~ 완료 — 웹 PWA, 스택 [PLATFORM_COMPARISON.md §6](PLATFORM_COMPARISON.md)
 4. 스팟 데이터 스키마 확정 → [PLATFORM_COMPARISON.md §4](PLATFORM_COMPARISON.md)
-5. 스팟 1곳(청계천 권장 — 자료 19건 확인됨) 콘텐츠 제작
-6. 정렬 프로토타입 구현
+5. 프로젝트 스캐폴딩 (Vite + React + TS + Tailwind + PWA + Pages 배포)
+6. 스팟 1곳(청계천 권장 — 자료 26건 확인됨) 콘텐츠 제작
+7. 정렬 프로토타입 구현
 
 ---
 

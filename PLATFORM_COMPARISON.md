@@ -1,6 +1,6 @@
 # 플랫폼 비교 — 서울 인 타임
 
-> 상태: 초안 v0.1 · 2026-09-10 · **결정 미확정**
+> 상태: v1.0 · 2026-09-10 · **결정 확정 — 웹 PWA** (§5·§6)
 > 상위 문서: [PRD.md](PRD.md) · 범위: [MVP.md](MVP.md)
 > 아래 기술 사양은 조사 시점 기준. **착수 전 실기기 검증 필요** 항목을 표시했다.
 
@@ -171,9 +171,55 @@ City in Time과 가장 가까운 구조. **ARCore Geospatial API**는 Google Str
 
 ---
 
-## 5. 결정 대기
+## 5. 결정 — 웹 PWA (2026-09-10)
 
-- [ ] 플랫폼 확정 (권장: A)
-- [ ] 목표 공공 공모 확인 — 요건이 플랫폼 결정을 뒤집을 수 있음
-- [ ] 8th Wall 등 웹 AR 상용 플랫폼 현재 가격 정책 조사
-- [ ] ARCore Geospatial의 서울 도심 실측 정확도 확인 (Phase 0 병행 가능)
+**Phase 0~1은 A. 웹 PWA.** Phase 2 상업화 진입 시 C. Unity + Geospatial 재평가.
+
+받아들인 한계 (§2-A 단점 그대로):
+- 진짜 AR 없음 — 나침반 각도 맞추면 사진이 뜨는 방식. 공간 고정 안 됨
+- 나침반 ±15도 — 수동 미세조정 슬라이더 필수. **Phase 0 성공률 70%가 이 한계의 판정 기준**
+- iOS 권한은 사용자 탭 안에서만 — "시작하기" 버튼 강제
+
+뒤집는 조건 (둘 중 하나면 C로):
+- 목표 공모 요건에 "AR 앱" 명시
+- Phase 0 정렬 성공률 70% 미달
+
+남은 조사 (결정에 영향 없음, Phase 1 전 참고용):
+- [ ] 8th Wall 등 웹 AR 상용 플랫폼 가격 정책
+- [ ] ARCore Geospatial 서울 도심 실측 정확도
+
+---
+
+## 6. 기술 스택 (확정)
+
+기준: 사용자가 이미 쓰는 것(React 19 · Tailwind 4 · TypeScript · GitHub Pages ·
+Playwright)을 그대로, 서버 없는 클라이언트 앱에 맞게 최소 구성.
+
+| 층 | 선택 | 이유 |
+|---|---|---|
+| 빌드·프레임워크 | **Vite + React 19 + TypeScript + Tailwind 4** | 카메라·센서 코드 전부 브라우저 쪽 → SSR 이점 0. Next.js보다 가볍고 `vite-plugin-pwa` 성숙 |
+| PWA | `vite-plugin-pwa` | manifest + 최소 서비스워커. 오프라인 캐싱은 MVP 밖 |
+| 호스팅 | **GitHub Pages + GitHub Actions** | HTTPS 무료 — `getUserMedia` 필수 조건. 이미 사용 중 |
+| 지도 (F1) | **Leaflet + OpenStreetMap 타일** | API 키·도메인 등록 없음. 핀 3개면 충분. 카카오맵은 Phase 1(스팟 30개)에서 재검토 |
+| 센서 (F2) | 자체 `heading.ts` 모듈 | iOS `webkitCompassHeading`(진북) / Android `deviceorientationabsolute.alpha`(자북) 분기 + 편각 보정. 순수 함수로 작성해 단위 테스트 |
+| 카메라·대조 뷰 (F3) | `<video>` + `<img>` 오버레이, 슬라이더 = `clip-path` | CSS만으로 성립. Canvas 실시간 합성 안 함 → 저사양 폰 발열 회피 |
+| 공유 (F5) | Canvas 2D **1회** 합성 → `toBlob` → Web Share API(files) | iOS·Android 파일 공유 지원. 미지원 브라우저는 이미지 저장 폴백 |
+| 데이터 | `public/spots/*.json` + 이미지 파생본 | 백엔드 없음 (MVP §4). 스키마 §4 |
+| 이미지 파이프라인 | `scripts/build-images.mjs` (sharp) | 원본 → 오버레이용 1000px + 열람용 2000px, WebP + JPEG 폴백. 원본은 `/archive-raw/` (gitignore) |
+| 테스트 | Vitest (방위·거리 계산) + Playwright 스모크 | 센서 수학은 순수 함수. UI는 이미 쓰는 Playwright |
+| 제외 | 상태관리 라이브러리 · 라우터 · 분석 · i18n 프레임워크 | 화면 4개. 필요해지면 그때 |
+
+### 화면 4개
+
+1. **홈/지도** — Leaflet 핀 3개 + 목록. 원격 모드 진입점
+2. **스팟 안내** — "여기 서서 이쪽" 참고 사진 + 메타 카드 + [시작하기] (iOS 권한 트리거)
+3. **정렬/대조** — 카메라 + 오버레이 + 나침반 유도 + 수동 미세조정 + 슬라이더
+4. **공유** — 합성 결과 미리보기 + 공유/저장
+
+### 알려진 구현 함정 (착수 전 재확인)
+
+- `DeviceOrientationEvent.requestPermission()` 은 iOS 13+에서 **사용자 제스처 안**에서만
+- Android `alpha`는 자북·반시계, iOS `webkitCompassHeading`은 진북·시계 — 부호와 기준 둘 다 다름
+- 편각(서울 약 −8~−9°)은 `geomagnetism` 계열 계산 또는 상수로 처리. MVP는 상수
+- `getUserMedia`는 `https://` 또는 `localhost`만. 개발 시 `vite --host` + 자체 인증서 필요 (실기기 테스트)
+- Web Share API `files`는 사용자 제스처 안에서만, HTTPS 필수
