@@ -30,6 +30,7 @@
 | [PRD.md](PRD.md) | 무엇을 · 누구를 위해 · 왜. 성공 기준, 제약, 리스크 |
 | [MVP.md](MVP.md) | 실제로 만들 최소 범위. 완료의 정의. 보류 목록 |
 | [BENCHMARK_CITY_IN_TIME.md](BENCHMARK_CITY_IN_TIME.md) | 홍콩 실물 사인 분석 — 거리 마커 층, Phase 0 판정 기준 재작성 근거 |
+| [PANORAMA_SOURCES.md](PANORAMA_SOURCES.md) | B안 콘텐츠 후보 12건 — 남산 조망 연결 사진(공공누리 1유형) |
 | [PLATFORM_COMPARISON.md](PLATFORM_COMPARISON.md) | 웹 PWA / Flutter / Unity AR / 웹AR 비교 및 권장안 |
 | [LICENSE_GATE.md](LICENSE_GATE.md) | 사진 라이선스 확보 가능성 조사 결과 · 소스별 판정 |
 | [SPOT_SCHEMA.md](SPOT_SCHEMA.md) | 스팟 데이터 스키마 v1 설명 — 콘텐츠 작업자용 |
@@ -59,9 +60,9 @@
    화면 중앙의 N/E/S/W가 실제 방위와 맞는지, 폰을 들면 +15° 선이 내려오는지, 기울이면 격자가
    반대로 도는지. 틀리면 `panoScene.ts` `setView()`의 부호. 그다음 청계천 광교에서 B·C·A 순서로
    실험 기록 ([BENCHMARK_CITY_IN_TIME.md §7.3](BENCHMARK_CITY_IN_TIME.md))
-10. **파노라마 실제 콘텐츠** — 데모는 격자 패턴. 서울역사아카이브 등에서 공공누리 1유형
-    파노라마(다중 판 연결 사진) 원본을 찾아 `projection: "equirect"`로 교체, 또는 같은 지점
-    사진 여러 장을 `view.heading_deg`로 배치 (부분 파노라마)
+10. **파노라마 실제 콘텐츠** — 후보 조사 완료 [PANORAMA_SOURCES.md](PANORAMA_SOURCES.md).
+    남산 회현동 조망점 스팟 신설: 1910·1925(서울역사아카이브 연결 사진) + 1974(서울기록원 11장).
+    다운로드 → 방위·화각 역산 → equirect 캔버스에 배치 → `namsan-hoehyeon.json`
 
 ---
 
