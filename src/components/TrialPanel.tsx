@@ -6,6 +6,7 @@ import { clearTrials, exportJson, loadTrials, summarize, type Trial } from '../l
 export function TrialPanel() {
   const [trials, setTrials] = useState<Trial[]>(() => loadTrials())
   const [status, setStatus] = useState<string | null>(null)
+  const [rawJson, setRawJson] = useState<string | null>(null)
   const s = summarize(trials)
 
   async function exportAll() {
@@ -26,7 +27,9 @@ export function TrialPanel() {
       await navigator.clipboard.writeText(json)
       setStatus('클립보드에 복사됨')
     } catch {
-      setStatus('내보내기 실패 — 브라우저가 공유·클립보드 둘 다 막음')
+      // Last resort: show it. The tester selects all and copies by hand.
+      setRawJson(json)
+      setStatus('공유·클립보드 모두 막힘 — 아래 내용을 길게 눌러 복사')
     }
   }
 
@@ -60,6 +63,14 @@ export function TrialPanel() {
         </span>
       </div>
       {status && <p className="mt-1">{status}</p>}
+      {rawJson && (
+        <textarea
+          readOnly
+          value={rawJson}
+          onFocus={(e) => e.currentTarget.select()}
+          className="mt-2 h-32 w-full rounded bg-neutral-900 p-2 font-mono text-[10px] text-neutral-300"
+        />
+      )}
     </section>
   )
 }
