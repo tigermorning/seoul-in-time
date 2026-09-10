@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   bearingDelta,
+  cameraOrientationFromEuler,
   magneticHeadingFromReading,
   magneticToTrue,
   normalizeBearing,
   overlayOffsetPx,
+  pitchRollFromReading,
   smoothBearing,
   trueHeadingFromReading,
 } from './heading'
@@ -64,11 +66,61 @@ describe('magneticToTrue', () => {
   })
 })
 
+describe('cameraOrientationFromEuler', () => {
+  // Phone upright in portrait, screen toward the user, camera looking north.
+  it('upright, facing north: heading 0, pitch 0, roll 0', () => {
+    const o = cameraOrientationFromEuler(0, 90, 0)
+    expect(o.heading).toBeCloseTo(0)
+    expect(o.pitch).toBeCloseTo(0)
+    expect(o.roll).toBeCloseTo(0)
+  })
+  it('upright, alpha=90 (device turned counter-clockwise): camera looks west (270)', () => {
+    expect(cameraOrientationFromEuler(90, 90, 0).heading).toBeCloseTo(270)
+  })
+  it('upright, gamma turns the camera too — the degenerate case 360-alpha gets wrong', () => {
+    // At beta=90 a gamma rotation is a yaw. gamma=+30 swings the camera
+    // 30° to the left (west of north).
+    expect(cameraOrientationFromEuler(0, 90, 30).heading).toBeCloseTo(330)
+    // alpha and gamma combine: alpha=90 then gamma=30 → 240.
+    expect(cameraOrientationFromEuler(90, 90, 30).heading).toBeCloseTo(240)
+  })
+  it('tilting the phone back (beta > 90) points the camera up', () => {
+    expect(cameraOrientationFromEuler(0, 100, 0).pitch).toBeCloseTo(10)
+    expect(cameraOrientationFromEuler(0, 80, 0).pitch).toBeCloseTo(-10)
+  })
+  it('flat on a table: camera looks straight down, no heading', () => {
+    const o = cameraOrientationFromEuler(0, 0, 0)
+    expect(o.heading).toBeNull()
+    expect(o.pitch).toBeCloseTo(-90)
+  })
+  it('flat, gamma=30 rolls the device X axis 30° below the horizon', () => {
+    // With beta=0 the device X axis is horizontal and gamma rotates it about
+    // Y; the X axis dips by gamma.
+    expect(cameraOrientationFromEuler(0, 0, 30).roll).toBeCloseTo(-30)
+  })
+  it('heading is periodic in alpha and unaffected by full-turn wraps', () => {
+    expect(cameraOrientationFromEuler(360, 90, 0).heading).toBeCloseTo(0)
+    expect(cameraOrientationFromEuler(-90, 90, 0).heading).toBeCloseTo(90)
+  })
+})
+
+describe('pitchRollFromReading', () => {
+  it('works without alpha (iOS gives a relative alpha)', () => {
+    expect(pitchRollFromReading({ alpha: null, beta: 100, gamma: 0 })?.pitch).toBeCloseTo(10)
+  })
+  it('returns null when beta/gamma are missing', () => {
+    expect(pitchRollFromReading({ alpha: 10 })).toBeNull()
+  })
+})
+
 describe('magneticHeadingFromReading', () => {
   it('prefers webkitCompassHeading (iOS) and reads it as-is', () => {
     expect(magneticHeadingFromReading({ alpha: 123, webkitCompassHeading: 45 })).toBe(45)
   })
-  it('inverts absolute alpha (Android): alpha=90 is 270° clockwise', () => {
+  it('uses the full rotation when beta/gamma are present', () => {
+    expect(magneticHeadingFromReading({ alpha: 0, beta: 90, gamma: 30, absolute: true })).toBeCloseTo(330)
+  })
+  it('falls back to 360-alpha without beta/gamma (Android, flat approximation)', () => {
     expect(magneticHeadingFromReading({ alpha: 90, absolute: true })).toBe(270)
     expect(magneticHeadingFromReading({ alpha: 0, absolute: true })).toBe(0)
   })

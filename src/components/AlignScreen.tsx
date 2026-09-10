@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Spot } from '../types/spot'
 import { bearingDelta, normalizeBearing, overlayOffsetPx, smoothBearing } from '../lib/heading'
-import { initialSensorStatus, requestOrientationPermission, subscribeTrueHeading, type SensorStatus } from '../lib/sensors'
+import { initialSensorStatus, requestOrientationPermission, subscribeCameraPose, type SensorStatus } from '../lib/sensors'
 import { startRearCamera, stopStream, type CameraError } from '../lib/camera'
 import { spotImageUrl } from '../lib/spots'
 import { newTrialId, saveTrial, type Anchor, type Trial, type TrialResult } from '../lib/trials'
@@ -156,11 +156,13 @@ export function AlignScreen({
   useEffect(() => {
     if (phase !== 'live' || sensor !== 'granted') return
     let smoothed: number | null = null
-    const unsub = subscribeTrueHeading((deg) => {
-      if (deg === null) return
+    const unsub = subscribeCameraPose((pose) => {
+      if (pose.heading === null) return
       setGotAnyReading(true)
-      smoothed = smoothBearing(smoothed, deg)
+      smoothed = smoothBearing(smoothed, pose.heading)
       setHeading(smoothed)
+      // pose.pitch / pose.roll are wired into the overlay in the next step
+      // (review finding #2); the heading fix (#3) only needs the horizontal.
     })
     return unsub
   }, [phase, sensor])

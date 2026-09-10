@@ -223,7 +223,10 @@ Playwright)을 그대로, 서버 없는 클라이언트 앱에 맞게 최소 구
 ### 알려진 구현 함정 (착수 전 재확인)
 
 - `DeviceOrientationEvent.requestPermission()` 은 iOS 13+에서 **사용자 제스처 안**에서만
-- Android `alpha`는 자북·반시계, iOS `webkitCompassHeading`은 진북·시계 — 부호와 기준 둘 다 다름
+- Android `alpha`는 자북·반시계, iOS `webkitCompassHeading`은 시계 — 부호가 다름. iOS 값이
+  진북인지 자북인지는 **실기기 측정으로 확정** (리뷰 #1)
+- Android에서 `360 − alpha`만 쓰면 **폰을 세웠을 때(beta≈90) 값이 튄다** — 오일러 특이점.
+  alpha·beta·gamma 전부로 회전행렬을 만들어 카메라 축을 투영해야 함 → `cameraOrientationFromEuler()` (리뷰 #3 처리)
 - 편각(서울 약 −8~−9°)은 `geomagnetism` 계열 계산 또는 상수로 처리. MVP는 상수
 - `getUserMedia`는 `https://` 또는 `localhost`만. 개발 시 `vite --host` + 자체 인증서 필요 (실기기 테스트)
 - Web Share API `files`는 사용자 제스처 안에서만, HTTPS 필수

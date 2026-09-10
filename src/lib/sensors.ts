@@ -1,6 +1,6 @@
 // Browser sensor plumbing for the compass. Everything that touches window /
 // DeviceOrientationEvent lives here; the math lives in heading.ts.
-import { trueHeadingFromReading, type OrientationReading } from './heading'
+import { pitchRollFromReading, trueHeadingFromReading, type OrientationReading } from './heading'
 
 export type SensorStatus =
   | 'unsupported' // no DeviceOrientationEvent at all
@@ -38,17 +38,28 @@ export async function requestOrientationPermission(): Promise<SensorStatus> {
   }
 }
 
-/** Subscribe to true-north headings. Returns an unsubscribe function.
- *  `null` is delivered when the device gives a reading we cannot trust. */
-export function subscribeTrueHeading(onHeading: (deg: number | null) => void): () => void {
+export interface CameraPose {
+  /** True-north heading of the camera axis, or null when untrustworthy. */
+  heading: number | null
+  /** Degrees above (+) / below (-) the horizon, or null without beta/gamma. */
+  pitch: number | null
+  /** Screen roll in degrees, positive = top of phone leans right. */
+  roll: number | null
+}
+
+/** Subscribe to the camera's pose. Returns an unsubscribe function. */
+export function subscribeCameraPose(onPose: (pose: CameraPose) => void): () => void {
   const handler = (e: DeviceOrientationEvent) => {
     const r: OrientationReading = {
       alpha: e.alpha,
+      beta: e.beta,
+      gamma: e.gamma,
       absolute: e.absolute,
       webkitCompassHeading: (e as DeviceOrientationEvent & { webkitCompassHeading?: number })
         .webkitCompassHeading,
     }
-    onHeading(trueHeadingFromReading(r))
+    const pr = pitchRollFromReading(r)
+    onPose({ heading: trueHeadingFromReading(r), pitch: pr?.pitch ?? null, roll: pr?.roll ?? null })
   }
   // Android Chrome fires 'deviceorientationabsolute' with absolute=true and
   // plain 'deviceorientation' with relative alpha. iOS only has the latter but

@@ -39,21 +39,88 @@ export function magneticToTrue(
  *  way: alpha=0 is north and alpha increases counter-clockwise. */
 export interface OrientationReading {
   alpha: number | null
+  beta?: number | null
+  gamma?: number | null
   absolute?: boolean
   webkitCompassHeading?: number
 }
 
+const DEG = Math.PI / 180
+
+/** Where the rear camera points and how the phone is rolled, derived from
+ *  the full W3C Euler triple (Z-X'-Y'' intrinsic: alpha about Z, then beta
+ *  about X', then gamma about Y''). Working from the rotation matrix instead
+ *  of `alpha` alone matters because the phone is held upright for this app
+ *  (beta ≈ 90°), which is exactly where alpha and gamma stop being separable
+ *  and `360 - alpha` turns to noise.
+ *
+ *  Earth frame per the spec: X east, Y north, Z up. The rear camera looks
+ *  along the device's -Z axis.
+ *
+ *  Returns heading in [0, 360) clockwise from (magnetic) north, or null when
+ *  the camera points nearly straight up/down so no heading exists; pitch in
+ *  degrees above (+) / below (-) the horizon; roll in degrees, positive when
+ *  the top of the phone leans right. Roll is relative to the device's own
+ *  X axis, so add the screen rotation angle for a landscape UI (this app
+ *  locks portrait). */
+export function cameraOrientationFromEuler(
+  alphaDeg: number,
+  betaDeg: number,
+  gammaDeg: number,
+): { heading: number | null; pitch: number; roll: number } {
+  const cA = Math.cos(alphaDeg * DEG)
+  const sA = Math.sin(alphaDeg * DEG)
+  const cB = Math.cos(betaDeg * DEG)
+  const sB = Math.sin(betaDeg * DEG)
+  const cG = Math.cos(gammaDeg * DEG)
+  const sG = Math.sin(gammaDeg * DEG)
+
+  // Third column of R = Rz(alpha)·Rx(beta)·Ry(gamma): the device +Z axis in
+  // Earth coordinates. The camera axis is its negation.
+  const vx = -(cA * sG + sA * sB * cG)
+  const vy = -(sA * sG - cA * sB * cG)
+  const vz = -(cB * cG)
+
+  const horizontal = Math.hypot(vx, vy)
+  const heading = horizontal < 0.1 ? null : normalizeBearing(Math.atan2(vx, vy) / DEG)
+  const pitch = Math.atan2(vz, horizontal) / DEG
+
+  // First column of R: the device +X axis in Earth coordinates. Its rise
+  // above the horizon is the roll of the screen.
+  const xz = -cB * sG
+  const roll = Math.asin(Math.max(-1, Math.min(1, xz))) / DEG
+
+  return { heading, pitch, roll }
+}
+
+function finite(n: number | null | undefined): n is number {
+  return typeof n === 'number' && Number.isFinite(n)
+}
+
 /** Magnetic compass heading from a device orientation reading, or null if
- *  the reading cannot yield an absolute heading (relative alpha on Android). */
+ *  the reading cannot yield an absolute heading (relative alpha on Android,
+ *  or camera pointing straight up/down). */
 export function magneticHeadingFromReading(r: OrientationReading): number | null {
-  if (typeof r.webkitCompassHeading === 'number' && Number.isFinite(r.webkitCompassHeading)) {
+  if (finite(r.webkitCompassHeading)) {
     return normalizeBearing(r.webkitCompassHeading)
   }
-  if (r.alpha === null || !Number.isFinite(r.alpha)) return null
+  if (!finite(r.alpha)) return null
   // Only trust alpha when the platform says it is absolute; a relative alpha
   // starts at 0 wherever the phone happened to point when the page loaded.
   if (r.absolute === false) return null
+  if (finite(r.beta) && finite(r.gamma)) {
+    return cameraOrientationFromEuler(r.alpha, r.beta, r.gamma).heading
+  }
+  // No beta/gamma: fall back to the flat-phone approximation.
   return normalizeBearing(360 - r.alpha)
+}
+
+/** Pitch and roll of the camera axis, or null when beta/gamma are missing.
+ *  Independent of alpha, so this works on iOS too (where alpha is relative). */
+export function pitchRollFromReading(r: OrientationReading): { pitch: number; roll: number } | null {
+  if (!finite(r.beta) || !finite(r.gamma)) return null
+  const { pitch, roll } = cameraOrientationFromEuler(0, r.beta, r.gamma)
+  return { pitch, roll }
 }
 
 /** Exponential smoothing that respects the 359→0 wrap. `alpha` in (0, 1]:
