@@ -26,7 +26,12 @@ export function PanoScreen({
   onBack: () => void
   onDone: (trial: Trial) => void
 }) {
-  const photo = spot.historical[0]
+  // Equirect panoramas of one spot are different eras of the same full
+  // sphere; drawn together they z-fight. Until there is an era selector
+  // (BACKLOG item 4), only the first one is drawn, and it is the photo the
+  // header credits and the trial records.
+  const equirect = spot.historical.find((h) => h.image.projection === 'equirect')
+  const photo = equirect ?? spot.historical[0]
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<PanoScene | null>(null)
 
@@ -56,7 +61,11 @@ export function PanoScreen({
     if (!canvas) return
     const scene = new PanoScene(canvas)
     sceneRef.current = scene
-    for (const h of spot.historical) {
+    // Flat photos all hang at their own bearings; of the equirects, only the
+    // first (see `equirect` above).
+    const first = spot.historical.find((h) => h.image.projection === 'equirect')
+    const shown = spot.historical.filter((h) => h.image.projection !== 'equirect' || h === first)
+    for (const h of shown) {
       scene.addPhoto(
         {
           url: spotImageUrl(spot, h.image.file),

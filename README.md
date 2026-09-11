@@ -61,9 +61,10 @@
    화면 중앙의 N/E/S/W가 실제 방위와 맞는지, 폰을 들면 +15° 선이 내려오는지, 기울이면 격자가
    반대로 도는지. 틀리면 `panoScene.ts` `setView()`의 부호. 그다음 청계천 광교에서 B·C·A 순서로
    실험 기록 ([BENCHMARK_CITY_IN_TIME.md §7.3](BENCHMARK_CITY_IN_TIME.md))
-10. **파노라마 실제 콘텐츠** — 후보 조사 완료 [PANORAMA_SOURCES.md](PANORAMA_SOURCES.md).
-    남산 회현동 조망점 스팟 신설: 1910·1925(서울역사아카이브 연결 사진) + 1974(서울기록원 11장).
-    다운로드 → 방위·화각 역산 → equirect 캔버스에 배치 → `namsan-hoehyeon.json`
+10. ~~파노라마 실제 콘텐츠~~ 합성 완료 (`spots/namsan-hoehyeon.json`, draft). **폰에서 검증 필요** —
+    홈 `남산 회현동 조망점` → B. 북쪽(346°)에 북악·경복궁 일대가 오는지.
+    역산한 촬영 지점은 백범광장이 아니라 약 500m 동쪽 케이블카 선로 부근이라 답사 대상도 거기.
+    결과·수치는 [PANORAMA_SOURCES.md](PANORAMA_SOURCES.md) 「2026-09-11」 절
 
 ---
 
@@ -133,13 +134,14 @@ src/lib/sensors.ts      DeviceOrientation 권한·구독 (iOS/Android 분기)
 src/lib/camera.ts       getUserMedia 후면 카메라
 src/components/SpotMap  Leaflet 지도
 src/components/AlignScreen  A안: 카메라 위 옛 사진 오버레이 + 나침반 유도 + 슬라이더 4개
-src/components/PanoScreen   B안: 카메라 없음. 스팟의 사진 전부를 3D 구 위에 방위대로 걸어 둘러봄
+src/components/PanoScreen   B안: 카메라 없음. 스팟의 사진을 3D 구 위에 방위대로 걸어 둘러봄 (equirect는 첫 장만)
 src/lib/panoScene.ts        three.js 장면 — equirect는 구 안쪽, 평면 사진은 방위·화각대로 카드
 src/components/WindowScreen C안: 카메라 없음. 옛 사진 1장을 방위에 고정, 나침반 없으면 드래그
 src/components/trial-ui     두 화면 공용: 방위 배지, 슬라이더, 판정 버튼, 기준선 질문
 src/components/usePose      센서 구독 + 스무딩 훅
 src/App.tsx             화면 4개 상태 전환 (공유만 자리표시)
 scripts/validate-spots  스키마 + 교차 규칙 검증
+scripts/*namsan*.py     남산 파노라마: 원본 받기 → 방위 역산 → equirect 합성 (PANORAMA_SOURCES.md)
 ```
 
 ---

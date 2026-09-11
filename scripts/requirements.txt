@@ -1,0 +1,6 @@
+# Python tools for the Namsan panorama (fetch_namsan_sources.py needs only the stdlib;
+# Pillow adds pixel sizes to its manifest).
+numpy>=2.0
+scipy>=1.13
+opencv-python>=4.9
+Pillow>=10.0
