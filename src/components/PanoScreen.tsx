@@ -10,6 +10,7 @@ import { initialSensorStatus, requestOrientationPermission, type SensorStatus } 
 import { spotImageUrl } from '../lib/spots'
 import { newTrialId, saveTrial, type Anchor, type Trial, type TrialResult } from '../lib/trials'
 import { AnchorSheet, HeadingReadout, Slider, VerdictButtons, fmt, settleResult } from './trial-ui'
+import { CreditBar } from './PhotoCredit'
 import { usePose } from './usePose'
 
 const DEFAULT_HFOV = 60
@@ -275,9 +276,7 @@ export function PanoScreen({
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 to-black/0 p-3 pb-5 text-xs">
-            <p className="truncate text-[10px] text-neutral-500">
-              {photo.source.org} · {photo.source.archive_id} · {photo.license.type}
-            </p>
+            <CreditBar photo={photo} />
             <Slider label={`방위 보정 ${trimDeg > 0 ? '+' : ''}${trimDeg}°`} min={-180} max={180} step={1} value={trimDeg} onChange={setTrimDeg} />
             <Slider label={`화각 ${hfov}°`} min={30} max={120} step={1} value={hfov} onChange={setHfov} />
             <VerdictButtons onVerdict={verdict} />

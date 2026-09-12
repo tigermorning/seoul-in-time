@@ -140,6 +140,7 @@ src/components/PanoScreen   B안: 카메라 없음. 스팟의 사진을 3D 구 �
 src/lib/panoScene.ts        three.js 장면 — equirect는 구 안쪽, 평면 사진은 방위·화각대로 카드
 src/components/WindowScreen C안: 카메라 없음. 옛 사진 1장을 방위에 고정, 나침반 없으면 드래그
 src/components/trial-ui     두 화면 공용: 방위 배지, 슬라이더, 판정 버튼, 기준선 질문
+src/components/PhotoCredit  출처표시(공공누리 의무): 안내 화면 카드 + 정렬 화면 접이식 출처줄. 문구는 src/lib/credit.ts
 src/components/usePose      센서 구독 + 스무딩 훅
 src/App.tsx             화면 4개 상태 전환 (공유만 자리표시)
 scripts/validate-spots  스키마 + 교차 규칙 검증

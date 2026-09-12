@@ -58,7 +58,7 @@
 
 ## 7. 기존 리뷰 잔여 (REVIEW-2026-09-10.md)
 - #5 광화문 스팟 1건 (서울역사아카이브) — 남산 하고 나서
-- #6 `license.determination` 필드 / #7 attribution 공유 이미지에 굽기 / #8 crop 적용 / #9 A 모드 배지 ±4°→±10° / #12 `cancel-in-progress: false` / #14 검증기 규칙
+- #6 `license.determination` 필드 / ~~#7 attribution 렌더~~(09-12 완료, 공유 이미지 굽기는 8번에서) / #8 crop 적용 / #9 A 모드 배지 ±4°→±10° / #12 `cancel-in-progress: false` / #14 검증기 규칙
 
 ## 8. 공유 화면 (F5)
 - A: 합성 캡처. B/C: 파노라마 캡처 + 현재 카메라 사진 나란히 (영상의 유튜버 편집 = 이 기능)

@@ -12,6 +12,7 @@ import { startRearCamera, stopStream, type CameraError } from '../lib/camera'
 import { spotImageUrl } from '../lib/spots'
 import { newTrialId, saveTrial, type Anchor, type Trial, type TrialResult } from '../lib/trials'
 import { AnchorSheet, HeadingReadout, Slider, VerdictButtons, fmt, settleResult } from './trial-ui'
+import { CreditBar } from './PhotoCredit'
 import { usePose } from './usePose'
 
 // Phones do not expose their camera FOV. 65° is a typical rear-camera value
@@ -284,6 +285,7 @@ export function AlignScreen({
           </div>
 
           <div className="absolute inset-x-0 bottom-0 space-y-2 bg-gradient-to-t from-black/90 to-black/0 p-3 pb-5 text-xs">
+            <CreditBar photo={photo} />
             <Slider label={`비교 ${reveal}%`} min={0} max={100} step={1} value={reveal} onChange={setReveal} />
             <Slider label={`투명도 ${Math.round(opacity * 100)}%`} min={0.1} max={1} step={0.05} value={opacity} onChange={setOpacity} />
             <Slider label={`방위 보정 ${trimDeg > 0 ? '+' : ''}${trimDeg}°`} min={-45} max={45} step={1} value={trimDeg} onChange={setTrimDeg} />
