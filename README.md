@@ -11,7 +11,7 @@
 
 ## 현재 상태
 
-**Phase 0 — 기획 단계. 코드 없음.**
+**Phase 0 — 프로토타입 3종 + 스팟 4건(draft). 실기기·현장 미검증.**
 
 | 단계 | 상태 |
 |---|---|
@@ -30,13 +30,15 @@
 | [BACKLOG.md](BACKLOG.md) | **내일 할 일.** 순서대로, 완료 기준 포함 |
 | [PRD.md](PRD.md) | 무엇을 · 누구를 위해 · 왜. 성공 기준, 제약, 리스크 |
 | [MVP.md](MVP.md) | 실제로 만들 최소 범위. 완료의 정의. 보류 목록 |
-| [BENCHMARK_CITY_IN_TIME.md](BENCHMARK_CITY_IN_TIME.md) | 홍콩 실물 사인 분석 — 거리 마커 층, Phase 0 판정 기준 재작성 근거 |
+| [REVIEW-2026-09-11.md](REVIEW-2026-09-11.md) | **기획·진척 검토 (최신).** 판정 REVISE — MVP 드리프트, Phase 0 판정 규칙 부재, 출처표시 미이행 |
+| [REVIEW-2026-09-10.md](REVIEW-2026-09-10.md) | 킥오프 당일 검토 15건, 처리 상태 |
+| [BENCHMARK_CITY_IN_TIME.md](BENCHMARK_CITY_IN_TIME.md) | 홍콩 실물 사인 분석 + §9 사이트 재조사(09-11) — 나침반 코드 0줄, 와이프 슬라이더, 77 MB 페이로드 |
 | [PANORAMA_SOURCES.md](PANORAMA_SOURCES.md) | B안 콘텐츠 후보 12건 — 남산 조망 연결 사진(공공누리 1유형) |
 | [PLATFORM_COMPARISON.md](PLATFORM_COMPARISON.md) | 웹 PWA / Flutter / Unity AR / 웹AR 비교 및 권장안 |
 | [LICENSE_GATE.md](LICENSE_GATE.md) | 사진 라이선스 확보 가능성 조사 결과 · 소스별 판정 |
 | [SPOT_SCHEMA.md](SPOT_SCHEMA.md) | 스팟 데이터 스키마 v1 설명 — 콘텐츠 작업자용 |
 | [schema/spot.schema.json](schema/spot.schema.json) | 스키마 기계 정의 (JSON Schema 2020-12) |
-| [spots/](spots/) | 스팟 데이터. 청계천 2건 + **`demo-pano` 파노라마 뷰어 테스트 패턴** (옛 사진 아님) |
+| [spots/](spots/) | 스팟 데이터. 청계천 2건 + 남산 회현동(equirect 3시대) + **`demo-pano` 파노라마 뷰어 테스트 패턴** (옛 사진 아님) |
 
 ---
 
