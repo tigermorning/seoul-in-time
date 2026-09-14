@@ -6,6 +6,8 @@ import { AlignScreen } from './components/AlignScreen'
 import { WindowScreen } from './components/WindowScreen'
 import { PanoScreen } from './components/PanoScreen'
 import { TrialPanel } from './components/TrialPanel'
+import { PhotoCredits } from './components/PhotoCredit'
+import { ShareScreen } from './components/ShareScreen'
 
 // The four MVP screens (PLATFORM_COMPARISON.md §6), plus 'window': the same
 // alignment step without a camera (안 C, BENCHMARK_CITY_IN_TIME.md §7.3).
@@ -50,13 +52,7 @@ export default function App() {
       return <WindowScreen {...props} />
     }
     case 'share':
-      return (
-        <Placeholder
-          title="공유"
-          body="합성 이미지 + Web Share. 다음 단계에서 구현."
-          onBack={() => setScreen({ name: 'home' })}
-        />
-      )
+      return <ShareScreen spot={screen.spot} onHome={() => setScreen({ name: 'home' })} />
   }
 }
 
@@ -118,15 +114,20 @@ function Guide({
       <button type="button" onClick={onBack} className="self-start text-sm text-neutral-400">
         ← 뒤로
       </button>
-      <h1 className="mt-4 text-xl font-semibold">{spot.name.ko}</h1>
-      <p className="mt-2 text-neutral-300">{spot.guide.instruction.ko}</p>
-      <ol className="mt-4 space-y-1 text-sm text-neutral-400">
-        <li>① 위 안내대로 자리를 잡고 그 방향을 본다.</li>
-        <li>② 아래에서 방식을 고른다. 시작한 순간부터 시간이 잰다.</li>
-        <li>③ 화면의 화살표대로 폰을 돌려 옛 사진을 가운데로.</li>
-        <li>④ 실제 풍경과 겹쳐 보이면 <b className="text-amber-400">맞았다</b>, 아니면 <b>못 맞췄다</b>.</li>
-      </ol>
-      <div className="mt-auto space-y-2">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <h1 className="mt-4 text-xl font-semibold">{spot.name.ko}</h1>
+        <p className="mt-2 text-neutral-300">{spot.guide.instruction.ko}</p>
+        <ol className="mt-4 space-y-1 text-sm text-neutral-400">
+          <li>① 위 안내대로 자리를 잡고 그 방향을 본다.</li>
+          <li>② 아래에서 방식을 고른다. 시작한 순간부터 시간이 잰다.</li>
+          <li>③ 화면의 화살표대로 폰을 돌려 옛 사진을 가운데로.</li>
+          <li>④ 실제 풍경과 겹쳐 보이면 <b className="text-amber-400">맞았다</b>, 아니면 <b>못 맞췄다</b>.</li>
+        </ol>
+        <div className="mt-6 mb-4">
+          <PhotoCredits photos={spot.historical} />
+        </div>
+      </div>
+      <div className="mt-2 space-y-2">
         <p className="text-xs text-neutral-500">
           현장 테스트는 두 방식을 번갈아 써서 기록한다. 둘 다 해 보는 게 좋다.
         </p>
@@ -155,26 +156,6 @@ function Guide({
           <span className="block text-xs text-neutral-400">카메라 켬. 실시간 영상 위에 옛 사진을 반투명으로 겹침</span>
         </button>
       </div>
-    </main>
-  )
-}
-
-function Placeholder({
-  title,
-  body,
-  onBack,
-}: {
-  title: string
-  body: string
-  onBack: () => void
-}) {
-  return (
-    <main className="flex h-full flex-col p-4">
-      <button type="button" onClick={onBack} className="self-start text-sm text-neutral-400">
-        ← 뒤로
-      </button>
-      <h1 className="mt-4 text-xl font-semibold">{title}</h1>
-      <p className="mt-2 text-neutral-300">{body}</p>
     </main>
   )
 }

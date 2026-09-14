@@ -19,7 +19,7 @@
 | MVP 범위 정의 | ✅ 초안 |
 | 플랫폼 선택 | ✅ **웹 PWA** — Vite + React 19 + TS + Tailwind 4, GitHub Pages, Leaflet ([§5·§6](PLATFORM_COMPARISON.md)) |
 | 사진 라이선스 게이트 | ✅ **조건부 통과** — [LICENSE_GATE.md](LICENSE_GATE.md) |
-| 구현 | 🔧 홈 + 정렬 프로토타입 **3종** — A 카메라 오버레이 / **B 파노라마(three.js, City in Time 방식)** / C 창 모드. 실험 기록이 방식별로 분리 집계됨. 공유 화면은 자리표시. **실기기 미검증** |
+| 구현 | 🔧 홈 + 정렬 프로토타입 **3종** — A 카메라 오버레이 / **B 파노라마(three.js, City in Time 방식)** / C 창 모드. 실험 기록이 방식별로 분리 집계됨. 사진 출처표시 전 화면. 공유 화면은 스텁(링크+문장만). **실기기 미검증** |
 
 ---
 
@@ -140,8 +140,10 @@ src/components/PanoScreen   B안: 카메라 없음. 스팟의 사진을 3D 구 �
 src/lib/panoScene.ts        three.js 장면 — equirect는 구 안쪽, 평면 사진은 방위·화각대로 카드
 src/components/WindowScreen C안: 카메라 없음. 옛 사진 1장을 방위에 고정, 나침반 없으면 드래그
 src/components/trial-ui     두 화면 공용: 방위 배지, 슬라이더, 판정 버튼, 기준선 질문
+src/components/PhotoCredit  출처표시(공공누리 의무): 안내 화면 카드 + 정렬 화면 접이식 출처줄. 문구는 src/lib/credit.ts
 src/components/usePose      센서 구독 + 스무딩 훅
-src/App.tsx             화면 4개 상태 전환 (공유만 자리표시)
+src/components/ShareScreen  공유 스텁: 링크+문장을 공유 시트 → 클립보드 → 텍스트 상자 순. 로직은 src/lib/share.ts
+src/App.tsx             화면 상태 전환 (정렬 성공 → 공유, 실패 → 홈)
 scripts/validate-spots  스키마 + 교차 규칙 검증
 scripts/*namsan*.py     남산 파노라마: 원본 받기 → 방위 역산 → equirect 합성 (PANORAMA_SOURCES.md)
 ```
