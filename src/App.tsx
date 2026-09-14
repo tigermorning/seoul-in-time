@@ -7,6 +7,7 @@ import { WindowScreen } from './components/WindowScreen'
 import { PanoScreen } from './components/PanoScreen'
 import { TrialPanel } from './components/TrialPanel'
 import { PhotoCredits } from './components/PhotoCredit'
+import { ShareScreen } from './components/ShareScreen'
 
 // The four MVP screens (PLATFORM_COMPARISON.md §6), plus 'window': the same
 // alignment step without a camera (안 C, BENCHMARK_CITY_IN_TIME.md §7.3).
@@ -51,13 +52,7 @@ export default function App() {
       return <WindowScreen {...props} />
     }
     case 'share':
-      return (
-        <Placeholder
-          title="공유"
-          body="합성 이미지 + Web Share. 다음 단계에서 구현."
-          onBack={() => setScreen({ name: 'home' })}
-        />
-      )
+      return <ShareScreen spot={screen.spot} onHome={() => setScreen({ name: 'home' })} />
   }
 }
 
@@ -161,26 +156,6 @@ function Guide({
           <span className="block text-xs text-neutral-400">카메라 켬. 실시간 영상 위에 옛 사진을 반투명으로 겹침</span>
         </button>
       </div>
-    </main>
-  )
-}
-
-function Placeholder({
-  title,
-  body,
-  onBack,
-}: {
-  title: string
-  body: string
-  onBack: () => void
-}) {
-  return (
-    <main className="flex h-full flex-col p-4">
-      <button type="button" onClick={onBack} className="self-start text-sm text-neutral-400">
-        ← 뒤로
-      </button>
-      <h1 className="mt-4 text-xl font-semibold">{title}</h1>
-      <p className="mt-2 text-neutral-300">{body}</p>
     </main>
   )
 }
