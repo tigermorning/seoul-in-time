@@ -108,7 +108,7 @@ export function AnchorSheet({
 }) {
   const [anchors, setAnchors] = useState<Anchor[]>([])
   return (
-    <div className="absolute inset-0 flex flex-col justify-center gap-4 bg-black/90 p-6">
+    <div className="absolute inset-0 z-30 flex flex-col justify-center gap-4 bg-black/90 p-6">
       <h2 className="text-lg font-semibold">
         {result === 'success' ? '무엇이 겹쳐 보였나요?' : '무엇을 맞추려고 했나요?'}
       </h2>

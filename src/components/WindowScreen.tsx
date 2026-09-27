@@ -236,7 +236,8 @@ export function WindowScreen({
         )}
       </div>
 
-      <header className="absolute inset-x-0 top-0 flex items-center justify-between p-3 text-sm">
+      {/* z-20 keeps back usable over the idle overlay; the starting overlay and AnchorSheet (z-30) still block it. */}
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-3 text-sm">
         <button type="button" onClick={back} className="rounded bg-black/50 px-3 py-1">← 뒤로</button>
         <span className="rounded bg-black/50 px-3 py-1">
           {photo.title.ko} · {photo.year_precision === 'circa' ? 'ca.' : ''}{photo.year ?? '?'}
@@ -289,7 +290,7 @@ export function WindowScreen({
       )}
 
       {phase === 'starting' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80">권한 요청 중…</div>
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80">권한 요청 중…</div>
       )}
 
       {phase === 'live' && (
