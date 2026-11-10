@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { spots } from './lib/spots'
+import { COURSE_STOPS, buildCourse } from './lib/course'
+import type { CourseEntry, Lang } from './lib/course'
+import { CourseHome, CourseStopScreen } from './components/CourseScreens'
 import type { Spot } from './types/spot'
 import { SpotMap } from './components/SpotMap'
 import { AlignScreen } from './components/AlignScreen'
@@ -12,7 +15,14 @@ import { ShareScreen } from './components/ShareScreen'
 // The four MVP screens (PLATFORM_COMPARISON.md §6), plus 'window': the same
 // alignment step without a camera (안 C, BENCHMARK_CITY_IN_TIME.md §7.3).
 // Both alignment screens record trials so the field test can compare them.
+// HACK:ON course first; the earlier AR experiment stays reachable as 'home'.
+const course = buildCourse(spots)
+const courseIds = new Set(COURSE_STOPS.map((s) => s.spotId))
+const labSpots = spots.filter((s) => !courseIds.has(s.id))
+
 type Screen =
+  | { name: 'course' }
+  | { name: 'stop'; index: number }
   | { name: 'home' }
   | { name: 'guide'; spot: Spot }
   | { name: 'align'; spot: Spot }
@@ -21,11 +31,40 @@ type Screen =
   | { name: 'share'; spot: Spot }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>({ name: 'home' })
+  const [screen, setScreen] = useState<Screen>({ name: 'course' })
+  const [lang, setLang] = useState<Lang>('en')
+  const openStop = useCallback((entry: CourseEntry) => setScreen({ name: 'stop', index: entry.index }), [])
 
   switch (screen.name) {
+    case 'course':
+      return (
+        <CourseHome
+          course={course}
+          lang={lang}
+          onLang={setLang}
+          onSelect={openStop}
+          onLab={() => setScreen({ name: 'home' })}
+        />
+      )
+    case 'stop':
+      return (
+        <CourseStopScreen
+          key={screen.index}
+          entry={course[screen.index]}
+          total={course.length}
+          lang={lang}
+          onLang={setLang}
+          onBack={() => setScreen({ name: 'course' })}
+          onGo={(index) => setScreen({ name: 'stop', index })}
+        />
+      )
     case 'home':
-      return <Home onSelect={(spot) => setScreen({ name: 'guide', spot })} />
+      return (
+        <Home
+          onSelect={(spot) => setScreen({ name: 'guide', spot })}
+          onCourse={() => setScreen({ name: 'course' })}
+        />
+      )
     case 'guide':
       return (
         <Guide
@@ -56,10 +95,13 @@ export default function App() {
   }
 }
 
-function Home({ onSelect }: { onSelect: (spot: Spot) => void }) {
+function Home({ onSelect, onCourse }: { onSelect: (spot: Spot) => void; onCourse: () => void }) {
   return (
     <main className="flex h-full flex-col">
       <header className="px-4 pt-4 pb-2">
+        <button type="button" onClick={onCourse} className="mb-2 text-sm text-neutral-400">
+          ← 코스
+        </button>
         <h1 className="text-xl font-semibold">서울 인 타임</h1>
         <p className="text-sm text-neutral-400">지금 서 있는 그 자리에서, 그때를 본다.</p>
       </header>
@@ -69,10 +111,10 @@ function Home({ onSelect }: { onSelect: (spot: Spot) => void }) {
         <li className="flex-1 rounded bg-neutral-900 px-2 py-1.5"><b className="text-amber-400">3</b> 방식을 골라 시작</li>
       </ol>
       <div className="h-64 shrink-0">
-        <SpotMap spots={spots} onSelect={onSelect} />
+        <SpotMap spots={labSpots} onSelect={onSelect} />
       </div>
       <ul className="flex-1 overflow-y-auto divide-y divide-neutral-800">
-        {spots.map((spot) => (
+        {labSpots.map((spot) => (
           <li key={spot.id}>
             <button
               type="button"
@@ -87,7 +129,7 @@ function Home({ onSelect }: { onSelect: (spot: Spot) => void }) {
             </button>
           </li>
         ))}
-        {spots.length === 0 && (
+        {labSpots.length === 0 && (
           <li className="px-4 py-3 text-sm text-neutral-500">spots/ 폴더에 스팟이 없음</li>
         )}
       </ul>
