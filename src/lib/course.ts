@@ -15,18 +15,17 @@ export interface CourseStop {
   audio: Partial<Record<'en' | 'zh', string>>
 }
 
-// Walking order from REVIEW-PR2-2026-11-10.md §1-5 (plan C): 2.87 km, about
-// 38 minutes on foot according to the OSRM foot profile.
+// Walking order: Cheongnyangni Station to the Jegi-dong hanok alleys and the
+// road toward Korea University. 2.54 km, about 34 minutes on the OSRM foot
+// profile; pins are rough map points until checked on site.
 export const COURSE_STOPS: CourseStop[] = [
-  { spotId: 'sungnyemun', nameZh: '崇礼门', story: {}, audio: {} },
-  { spotId: 'shinsegae-main', nameZh: '新世界百货总店', story: {}, audio: {} },
-  { spotId: 'bok-money-museum', nameZh: '韩国银行货币博物馆', story: {}, audio: {} },
-  { spotId: 'gwangtonggwan', nameZh: '广通馆', story: {}, audio: {} },
-  { spotId: 'myeongdong-theater', nameZh: '明洞艺术剧场', story: {}, audio: {} },
-  { spotId: 'myeongdong-cathedral', nameZh: '明洞圣堂', story: {}, audio: {} },
+  { spotId: 'cheongnyangni-station', nameZh: '清凉里站', story: {}, audio: {} },
+  { spotId: 'cheongnyangni-market', nameZh: '清凉里市场', story: {}, audio: {} },
+  { spotId: 'jegi-hanok-alley', nameZh: '祭基洞韩屋胡同', story: {}, audio: {} },
+  { spotId: 'jegi-road-korea-univ', nameZh: '通往高丽大学的路', story: {}, audio: {} },
 ]
 
-export const COURSE_WALK = { km: 2.87, minutes: 38 }
+export const COURSE_WALK = { km: 2.54, minutes: 34 }
 
 export interface CourseEntry {
   index: number
@@ -54,7 +53,7 @@ export function stopName(entry: CourseEntry, lang: Lang): string {
 export const UI: Record<Lang, Record<string, string>> = {
   en: {
     title: 'Seoul in Time',
-    tagline: 'Same corner, different century — a walk through old Seoul in central Jung-gu.',
+    tagline: 'Same corner, different decade — everyday Seoul in Jegi-dong, from markets to hanok alleys.',
     walk: '{km} km · about {min} min on foot',
     back: '← Course',
     next: 'Next stop →',
@@ -69,7 +68,7 @@ export const UI: Record<Lang, Record<string, string>> = {
   },
   zh: {
     title: 'Seoul in Time',
-    tagline: '同一个街角，不同的时代——漫步首尔中区的旧时光。',
+    tagline: '同一个街角，不同的年代——从市场到韩屋胡同，走进祭基洞的日常首尔。',
     walk: '{km} 公里 · 步行约 {min} 分钟',
     back: '← 路线',
     next: '下一站 →',
@@ -84,7 +83,7 @@ export const UI: Record<Lang, Record<string, string>> = {
   },
   ko: {
     title: '서울 인 타임',
-    tagline: '같은 자리, 다른 시간 — 서울 중구 옛길 걷기.',
+    tagline: '같은 자리, 다른 시간 — 시장에서 한옥 골목까지, 제기동의 평범한 하루.',
     walk: '{km}km · 걸어서 약 {min}분',
     back: '← 코스',
     next: '다음 장소 →',

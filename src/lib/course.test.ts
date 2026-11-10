@@ -6,14 +6,12 @@ import { COURSE_STOPS, LANGS, UI, buildCourse, t } from './course'
 describe('course', () => {
   const course = buildCourse(spots)
 
-  it('has the six stops in walking order', () => {
+  it('has the four Jegi-dong stops in walking order', () => {
     expect(course.map((e) => e.spot.id)).toEqual([
-      'sungnyemun',
-      'shinsegae-main',
-      'bok-money-museum',
-      'gwangtonggwan',
-      'myeongdong-theater',
-      'myeongdong-cathedral',
+      'cheongnyangni-station',
+      'cheongnyangni-market',
+      'jegi-hanok-alley',
+      'jegi-road-korea-univ',
     ])
   })
 
